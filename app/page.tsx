@@ -155,7 +155,7 @@ function SmartCityEventsMapContent() {
                   setFilters((prev) => ({ ...prev, category: value }))
                 }
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full muted-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
