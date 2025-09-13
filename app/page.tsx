@@ -15,6 +15,8 @@ import {
 import { MapPin, Calendar, Clock, Search, Filter, Menu, X } from "lucide-react";
 import type { Event, EventFilters } from "@/lib/types";
 
+import events from "../data.json";
+
 const categories = [
   "all",
   "Festival",
@@ -32,24 +34,7 @@ const dateRanges = [
 ];
 
 // Static events array
-const eventsData: Event[] = [
-  {
-    id: "1",
-    title: "Music Festival",
-    description: "Enjoy live music in the city center",
-    start_date: "2025-09-12T18:00:00",
-    location_name: "City Park",
-    category: "Festival",
-  },
-  {
-    id: "2",
-    title: "Art Exhibition",
-    description: "Local artists showcase their work",
-    start_date: "2025-09-13T10:00:00",
-    location_name: "Art Gallery",
-    category: "Culture",
-  },
-];
+const eventsData: Event[] = events;
 
 function SmartCityEventsMapContent() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
