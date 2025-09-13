@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { MapPin, Calendar, Clock, Search, Filter, Menu, X } from "lucide-react";
 import type { Event, EventFilters } from "@/lib/types";
+import AuthButton from "@/components/auth-button";
 
 import events from "../data.json";
 
@@ -101,14 +102,17 @@ function SmartCityEventsMapContent() {
                 Discover what's happening in the city
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <AuthButton />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Search */}
