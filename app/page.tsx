@@ -15,8 +15,19 @@ import {
 import { MapPin, Calendar, Clock, Search, Filter, Menu, X } from "lucide-react";
 import type { Event, EventFilters } from "@/lib/types";
 import AuthButton from "@/components/auth-button";
-
+import dynamic from "next/dynamic";
 import events from "../data.json";
+import "leaflet/dist/leaflet.css";
+
+// Dynamically import the map component to avoid SSR issues
+const MapComponent = dynamic(() => import("@/components/map-component"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full bg-muted animate-pulse rounded-lg flex items-center justify-center">
+      <div className="text-muted-foreground">Loading map...</div>
+    </div>
+  ),
+});
 
 const categories = [
   "all",
@@ -218,7 +229,13 @@ function SmartCityEventsMapContent() {
             <Menu className="h-4 w-4" />
           </Button>
         )}
-        <div className="w-full h-full"></div>
+        <div className="w-full h-full">
+          <MapComponent
+            events={filteredEvents}
+            selectedEvent={selectedEvent}
+            onEventSelect={setSelectedEvent}
+          />
+        </div>
       </div>
     </div>
   );

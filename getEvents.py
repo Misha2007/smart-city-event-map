@@ -2,8 +2,10 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 from time import sleep
 import json
+import re
 
-url = "https://kultuuriaken.tartu.ee/en/events"
+base_url = "https://kultuuriaken.tartu.ee"
+url = base_url + "/en/events"
 
 driver = webdriver.Firefox()
 driver.get(url)
@@ -16,26 +18,43 @@ events = []
 event_id = 1
 
 for div in soup.find_all('div', class_='col'):
-    name = div.find('a')
-    image_div = div.find('div', class_='image')
+    link_tag = div.find('a')
     location_time = div.find_all('p')
 
-    if name and location_time:
-        title = name.get_text(strip=True)
+    if link_tag and location_time:
+        title = link_tag.get_text(strip=True)
+        href = link_tag['href']
+        full_url = href if href.startswith("http") else base_url + href
 
-        # Description fallback (no real description exists in preview, so we'll use title or a default)
-        description = f"Event: {title}"
+        # Visit individual event page to get coordinates and category
+        driver.get(full_url)
+        sleep(2)
+        event_soup = BeautifulSoup(driver.page_source, "html.parser")
 
-        # Extract date/time (fallback to empty if missing)
-        start_date_raw = location_time[1].get_text(strip=True) if len(location_time) > 1 else ""
-        # Convert start_date to ISO format if possible — placeholder for now
-        start_date = "2025-09-12T00:00:00"  # You can parse actual date here if available
+        # Coordinates
+        scripts = event_soup.find_all("script")
+        latitude = longitude = None
+        for script in scripts:
+            if "kultuuriaken" in script.text:
+                match_lat = re.search(r'"latitude":([0-9\.\-]+)', script.text)
+                match_lon = re.search(r'"longitude":([0-9\.\-]+)', script.text)
+                if match_lat and match_lon:
+                    latitude = float(match_lat.group(1))
+                    longitude = float(match_lon.group(1))
+                break
 
-        # Extract location
-        location_name = location_time[0].get_text(strip=True) if location_time else ""
-
-        # Dummy category for now (can parse from site if it exists)
+        # Category: first <li> inside <ul> with class tags
         category = "General"
+        ul_tag = event_soup.find("ul", class_="tags")
+        if ul_tag:
+            li_tag = ul_tag.find("li")
+            if li_tag:
+                category = li_tag.get_text(strip=True)
+
+        # Other info
+        description = f"Event: {title}"
+        start_date = "2025-09-12T00:00:00"  # placeholder
+        location_name = location_time[0].get_text(strip=True) if location_time else ""
 
         event = {
             "id": str(event_id),
@@ -43,7 +62,9 @@ for div in soup.find_all('div', class_='col'):
             "description": description,
             "start_date": start_date,
             "location_name": location_name,
-            "category": category
+            "category": category,
+            "latitude": latitude,
+            "longitude": longitude
         }
 
         events.append(event)
