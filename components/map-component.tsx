@@ -4,11 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Clock, ExternalLink, X } from "lucide-react";
+import {
+  MapPin,
+  Calendar,
+  Clock,
+  ExternalLink,
+  X,
+  Heart,
+  HeartOff,
+} from "lucide-react";
 import type { Event } from "@/lib/types";
 
 // Leaflet imports (dynamic to avoid SSR issues)
 let L: any = null;
+
 if (typeof window !== "undefined") {
   L = require("leaflet");
   require("leaflet");

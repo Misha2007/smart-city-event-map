@@ -1,9 +1,22 @@
 from selenium import webdriver
 from bs4 import BeautifulSoup
 from time import sleep
-import json
 import re
+from supabase import create_client
+from dotenv import load_dotenv
+import os
 
+# Load .env
+load_dotenv(".env.local")
+
+SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+
+print(f"Supabase URL: {SUPABASE_URL}")
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Scraping part
 base_url = "https://kultuuriaken.tartu.ee"
 url = base_url + "/en/events"
 
@@ -13,9 +26,6 @@ sleep(2)
 
 response = driver.page_source
 soup = BeautifulSoup(response, "html.parser")
-
-events = []
-event_id = 1
 
 for div in soup.find_all('div', class_='col'):
     link_tag = div.find('a')
@@ -43,7 +53,7 @@ for div in soup.find_all('div', class_='col'):
                     longitude = float(match_lon.group(1))
                 break
 
-        # Category: first <li> inside <ul> with class tags
+        # Category
         category = "General"
         ul_tag = event_soup.find("ul", class_="tags")
         if ul_tag:
@@ -56,8 +66,7 @@ for div in soup.find_all('div', class_='col'):
         start_date = "2025-09-12T00:00:00"  # placeholder
         location_name = location_time[0].get_text(strip=True) if location_time else ""
 
-        event = {
-            "id": str(event_id),
+        event_data = {
             "title": title,
             "description": description,
             "start_date": start_date,
@@ -67,13 +76,12 @@ for div in soup.find_all('div', class_='col'):
             "longitude": longitude
         }
 
-        events.append(event)
-        event_id += 1
+        # Insert into Supabase (table name: events)
+        try:
+            result = supabase.table("events").insert(event_data).execute()
+            print(f"Inserted: {title}")
+        except Exception as e:
+            print(f"Error inserting event '{title}': {e}")
 
 driver.quit()
-
-# Save to data.json
-with open("data.json", "w", encoding="utf-8") as f:
-    json.dump(events, f, ensure_ascii=False, indent=2)
-
-print(f"Saved {len(events)} structured events to data.json.")
+print("Scraping and insertion complete.")

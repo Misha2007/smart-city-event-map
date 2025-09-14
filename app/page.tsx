@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +12,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MapPin, Calendar, Clock, Search, Filter, Menu, X } from "lucide-react";
+import {
+  MapPin,
+  Calendar,
+  Clock,
+  Search,
+  Filter,
+  Menu,
+  X,
+  Heart,
+  HeartOff,
+} from "lucide-react";
 import type { Event, EventFilters } from "@/lib/types";
 import AuthButton from "@/components/auth-button";
 import dynamic from "next/dynamic";
-import events from "../data.json";
 import "leaflet/dist/leaflet.css";
+import { createClient } from "@/lib/supabase/client";
 
 // Dynamically import the map component to avoid SSR issues
 const MapComponent = dynamic(() => import("@/components/map-component"), {
@@ -45,9 +55,6 @@ const dateRanges = [
   { value: "month", label: "This Month" },
 ];
 
-// Static events array
-const eventsData: Event[] = events;
-
 function SmartCityEventsMapContent() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -56,6 +63,13 @@ function SmartCityEventsMapContent() {
     search: "",
     dateRange: "all",
   });
+  const supabase = createClient();
+  ``;
+
+  // Static events array
+  const [eventsData, setEventsData] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const filteredEvents = eventsData.filter((event) => {
     const matchesCategory =
@@ -65,6 +79,89 @@ function SmartCityEventsMapContent() {
       .includes(filters.search.toLowerCase());
     return matchesCategory && matchesSearch;
   });
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const params = new URLSearchParams();
+      if (filters.category !== "all")
+        params.append("category", filters.category);
+      if (filters.search) params.append("search", filters.search);
+      if (filters.dateRange !== "all")
+        params.append("dateRange", filters.dateRange);
+
+      const response = await fetch(`/api/events?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch events");
+      }
+
+      const data = await response.json();
+      setEventsData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Error fetching events:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("user_favorites")
+        .select("event_id")
+        .eq("user_id", user.id);
+
+      if (data) {
+        setFavoriteIds(data.map((fav) => fav.event_id));
+      }
+    };
+
+    fetchFavorites();
+  }, []);
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const toggleFavorite = async (eventId: string) => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const isFav = favoriteIds.includes(eventId);
+
+    if (isFav) {
+      await supabase
+        .from("user_favorites")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("event_id", eventId);
+
+      setFavoriteIds((prev) => prev.filter((id) => id !== eventId));
+    } else {
+      const response = await supabase.from("user_favorites").insert({
+        user_id: user.id,
+        event_id: eventId,
+      });
+
+      console.log("Favorite added:", response, eventId);
+
+      setFavoriteIds((prev) => [...prev, eventId]);
+    }
+  };
 
   const getCategoryColor = (category: string) => {
     const colors = {
@@ -187,9 +284,26 @@ function SmartCityEventsMapContent() {
                   }`}
                   onClick={() => setSelectedEvent(event)}
                 >
-                  <h4 className="font-medium text-sm text-foreground">
-                    {event.title}
-                  </h4>
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-medium text-sm text-foreground">
+                      {event.title}
+                    </h4>
+                    <Button
+                      variant="like"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(event.id);
+                      }}
+                    >
+                      {favoriteIds.includes(event.id) ? (
+                        <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+                      ) : (
+                        <HeartOff className="w-4 h-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+
                   {event.description && (
                     <p className="text-xs text-muted-foreground">
                       {event.description}
