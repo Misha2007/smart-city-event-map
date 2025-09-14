@@ -15,39 +15,52 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-interface AuthUser {
-  id: string;
-  email?: string;
-  user_metadata?: {
-    display_name?: string;
-    avatar_url?: string;
-  };
-}
-
 export default function AuthButton() {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string>("user");
+  const [profile, setProfile] = useState<{
+    display_name?: string;
+    avatar_url?: string;
+  } | null>(null);
+
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
-    // Get initial user
     const getUser = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+
+      if (!user) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
       setUser(user);
 
-      if (user) {
-        // Get user role
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .single();
+      // Load user role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
 
-        setUserRole(roleData?.role || "user");
+      if (roleData) {
+        setUserRole(roleData.role);
+      }
+
+      // Load profile data
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("id", user.id)
+        .single();
+
+      if (profileData) {
+        setProfile(profileData);
       }
 
       setLoading(false);
@@ -55,13 +68,13 @@ export default function AuthButton() {
 
     getUser();
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (!session?.user) {
         setUserRole("user");
+        setProfile(null);
       }
       setLoading(false);
     });
@@ -92,8 +105,9 @@ export default function AuthButton() {
   }
 
   const displayName =
-    user.user_metadata?.display_name || user.email?.split("@")[0] || "User";
-  const avatarUrl = user.user_metadata?.avatar_url;
+    profile?.display_name || user.email?.split("@")[0] || "User";
+  const avatarUrl =
+    profile?.avatar_url || user.user_metadata?.avatar_url || "/placeholder.svg";
   const isAdmin = userRole === "admin" || userRole === "moderator";
 
   return (
@@ -101,10 +115,7 @@ export default function AuthButton() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage
-              src={avatarUrl || "/placeholder.svg"}
-              alt={displayName}
-            />
+            <AvatarImage src={avatarUrl} alt={displayName} />
             <AvatarFallback>
               {displayName.charAt(0).toUpperCase()}
             </AvatarFallback>
