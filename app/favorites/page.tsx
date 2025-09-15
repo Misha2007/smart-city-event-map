@@ -31,7 +31,7 @@ export default function FavoriteEventsPage() {
         .eq("user_id", user.id);
 
       if (data && !error) {
-        const events = data.map((fav) => fav.events);
+        const events = data.flatMap((fav) => fav.events);
         setFavorites(events);
       }
 
