@@ -23,7 +23,7 @@ import {
   Heart,
   HeartOff,
 } from "lucide-react";
-import type { Event, EventFilters } from "@/lib/types";
+import type { Event, Category, EventFilters } from "@/lib/types";
 import AuthButton from "@/components/auth-button";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
@@ -71,13 +71,43 @@ function SmartCityEventsMapContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [categories, setCategories] = useState<Category[]>([]);
+
   const filteredEvents = eventsData.filter((event) => {
     const matchesCategory =
-      filters.category === "all" || event.category === filters.category;
+      filters.category === "all" || event.category?.slug === filters.category;
+
     const matchesSearch = event.title
       .toLowerCase()
       .includes(filters.search.toLowerCase());
-    return matchesCategory && matchesSearch;
+
+    const eventDate = new Date(event.start_date);
+    const now = new Date();
+
+    let matchesDate = true;
+
+    switch (filters.dateRange) {
+      case "today":
+        const startOfDay = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate()
+        );
+        matchesDate = eventDate >= startOfDay;
+        break;
+
+      case "week":
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        matchesDate = eventDate >= oneWeekAgo;
+        break;
+
+      case "month":
+        const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        matchesDate = eventDate >= oneMonthAgo;
+        break;
+    }
+
+    return matchesCategory && matchesSearch && matchesDate;
   });
 
   const fetchEvents = async () => {
@@ -163,25 +193,28 @@ function SmartCityEventsMapContent() {
     }
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors = {
-      Festival:
-        "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-      Culture:
-        "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-      Nature:
-        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      Education:
-        "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-      Sports: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-      Technology:
-        "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
-    };
-    return (
-      colors[category] ||
-      "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-    );
+  const fetchCategories = async (): Promise<Category[]> => {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, name, slug, icon, color")
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error("Error fetching categories:", error);
+      return [];
+    }
+
+    return data ?? [];
   };
+
+  useEffect(() => {
+    const getCategories = async () => {
+      const cats = await fetchCategories();
+      setCategories(cats);
+    };
+
+    getCategories();
+  }, []);
 
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -256,9 +289,36 @@ function SmartCityEventsMapContent() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category === "all" ? "All Categories" : category}
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.slug} value={cat.slug}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-2 block">
+                Date Range
+              </label>
+              <Select
+                value={filters.dateRange}
+                onValueChange={(value) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    dateRange: value as EventFilters["dateRange"],
+                  }))
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {dateRanges.map((range) => (
+                    <SelectItem key={range.value} value={range.value}>
+                      {range.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -320,9 +380,11 @@ function SmartCityEventsMapContent() {
                     {event.location_name}
                   </div>
                   <Badge
-                    className={`text-xs ${getCategoryColor(event.category)}`}
+                    className={`text-xs ${
+                      event.category.color ?? "bg-gray-200"
+                    }`}
                   >
-                    {event.category}
+                    {event.category.name}
                   </Badge>
                 </Card>
               );

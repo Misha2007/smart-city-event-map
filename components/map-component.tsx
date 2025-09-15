@@ -135,26 +135,6 @@ export default function MapComponent({
     }
   }, [selectedEvent]);
 
-  const getCategoryColor = (category: string) => {
-    const colors = {
-      Festival:
-        "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-      Culture:
-        "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-      Nature:
-        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      Education:
-        "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-      Sports: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-      Technology:
-        "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
-    };
-    return (
-      colors[category] ||
-      "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-    );
-  };
-
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString);
     return {
@@ -177,12 +157,8 @@ export default function MapComponent({
                 <h3 className="font-semibold text-foreground mb-1">
                   {selectedEvent.title}
                 </h3>
-                <Badge
-                  className={`text-xs ${getCategoryColor(
-                    selectedEvent.category
-                  )}`}
-                >
-                  {selectedEvent.category}
+                <Badge className={`text-xs ${selectedEvent.category?.color}`}>
+                  {selectedEvent.category?.name}
                 </Badge>
               </div>
               <Button

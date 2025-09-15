@@ -54,12 +54,13 @@ for div in soup.find_all('div', class_='col'):
                 break
 
         # Category
-        category = "General"
+        category = "Other"
         ul_tag = event_soup.find("ul", class_="tags")
         if ul_tag:
             li_tag = ul_tag.find("li")
             if li_tag:
                 category = li_tag.get_text(strip=True)
+                print(category)
 
         # Other info
         description = f"Event: {title}"

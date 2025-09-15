@@ -4,11 +4,21 @@ export interface EventFilters {
   dateRange: "all" | "today" | "week" | "month";
 }
 
+export type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  icon?: string;
+  color:
+    | string
+    | "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+};
+
 export interface Event {
   id: string;
   title: string;
   description: string | null;
-  category: string;
+  category: Category;
   location_name: string;
   latitude: number | 58.395385;
   longitude: number | 26.744548;

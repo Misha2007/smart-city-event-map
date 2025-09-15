@@ -14,7 +14,24 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from("events")
-      .select("*")
+      .select(
+        `
+    id,
+    title,
+    description,
+    start_date,
+    location_name,
+    latitude,
+    longitude,
+    category:categories (
+      id,
+      name,
+      slug,
+      icon,
+      color
+    )
+  `
+      )
       .order("start_date", { ascending: true });
 
     // Apply category filter
