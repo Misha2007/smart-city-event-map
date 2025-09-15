@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -50,12 +49,12 @@ import {
   Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { Event } from "@/lib/types";
+import type { Category, Event } from "@/lib/types";
 
 interface EventFormData {
   title: string;
   description: string;
-  category: string;
+  category_id: string;
   location_name: string;
   latitude: number;
   longitude: number;
@@ -66,15 +65,6 @@ interface EventFormData {
   contact_info: string;
 }
 
-const categories = [
-  "Festival",
-  "Culture",
-  "Nature",
-  "Education",
-  "Sports",
-  "Technology",
-];
-
 export default function AdminDashboard() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,12 +72,13 @@ export default function AdminDashboard() {
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categoriesList, setCategoriesList] = useState<Category[]>([]);
   const supabase = createClient();
 
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
     description: "",
-    category: "Culture",
+    category_id: "",
     location_name: "",
     latitude: 58.3806,
     longitude: 26.7251,
@@ -103,11 +94,42 @@ export default function AdminDashboard() {
       setLoading(true);
       const { data, error } = await supabase
         .from("events")
-        .select("*")
+        .select(
+          `
+        id,
+        title,
+        description,
+        start_date,
+        end_date,
+        location_name,
+        latitude,
+        longitude,
+        image_url,
+        website_url,
+        contact_info,
+        created_at,
+        updated_at,
+        category:categories (
+          id,
+          name,
+          slug,
+          color
+        )
+      `
+        )
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setEvents(data || []);
+
+      // Normalize the returned data to match your Event type
+      const normalized = (data || []).map((e: any) => ({
+        ...e,
+        category: Array.isArray(e.category)
+          ? e.category[0] || null
+          : e.category ?? null,
+      }));
+
+      setEvents(normalized);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch events");
     } finally {
@@ -115,15 +137,27 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("id, name, slug, color")
+      .order("name", { ascending: true });
+
+    if (!error && data) {
+      setCategoriesList(data);
+    }
+  };
+
   useEffect(() => {
     fetchEvents();
+    fetchCategories();
   }, []);
 
   const resetForm = () => {
     setFormData({
       title: "",
       description: "",
-      category: "Culture",
+      category_id: "",
       location_name: "",
       latitude: 58.3806,
       longitude: 26.7251,
@@ -141,7 +175,7 @@ export default function AdminDashboard() {
     setFormData({
       title: event.title,
       description: event.description || "",
-      category: event.category,
+      category_id: event.category?.id ?? "",
       location_name: event.location_name,
       latitude: event.latitude,
       longitude: event.longitude,
@@ -161,8 +195,10 @@ export default function AdminDashboard() {
     setIsSubmitting(true);
 
     try {
-      const eventData = {
-        ...formData,
+      const eventData: any = {
+        title: formData.title,
+        description: formData.description || null,
+        location_name: formData.location_name,
         latitude: Number(formData.latitude),
         longitude: Number(formData.longitude),
         start_date: new Date(formData.start_date).toISOString(),
@@ -172,7 +208,7 @@ export default function AdminDashboard() {
         image_url: formData.image_url || null,
         website_url: formData.website_url || null,
         contact_info: formData.contact_info || null,
-        description: formData.description || null,
+        category_id: formData.category_id,
       };
 
       if (editingEvent) {
@@ -184,7 +220,6 @@ export default function AdminDashboard() {
         if (error) throw error;
       } else {
         const { error } = await supabase.from("events").insert([eventData]);
-
         if (error) throw error;
       }
 
@@ -206,32 +241,11 @@ export default function AdminDashboard() {
         .from("events")
         .delete()
         .eq("id", eventId);
-
       if (error) throw error;
       await fetchEvents();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete event");
     }
-  };
-
-  const getCategoryColor = (category: string) => {
-    const colors = {
-      Festival:
-        "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-      Culture:
-        "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-      Nature:
-        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-      Education:
-        "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-      Sports: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-      Technology:
-        "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
-    };
-    return (
-      colors[category] ||
-      "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-    );
   };
 
   return (
@@ -298,18 +312,18 @@ export default function AdminDashboard() {
                 <div>
                   <Label htmlFor="category">Category *</Label>
                   <Select
-                    value={formData.category}
+                    value={formData.category_id}
                     onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, category: value }))
+                      setFormData((prev) => ({ ...prev, category_id: value }))
                     }
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
+                      {categoriesList.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -328,115 +342,6 @@ export default function AdminDashboard() {
                       }))
                     }
                     required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="latitude">Latitude *</Label>
-                  <Input
-                    id="latitude"
-                    type="number"
-                    step="any"
-                    value={formData.latitude}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        latitude: Number.parseFloat(e.target.value),
-                      }))
-                    }
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="longitude">Longitude *</Label>
-                  <Input
-                    id="longitude"
-                    type="number"
-                    step="any"
-                    value={formData.longitude}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        longitude: Number.parseFloat(e.target.value),
-                      }))
-                    }
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="start_date">Start Date & Time *</Label>
-                  <Input
-                    id="start_date"
-                    type="datetime-local"
-                    value={formData.start_date}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        start_date: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="end_date">End Date & Time</Label>
-                  <Input
-                    id="end_date"
-                    type="datetime-local"
-                    value={formData.end_date}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        end_date: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="website_url">Website URL</Label>
-                  <Input
-                    id="website_url"
-                    type="url"
-                    value={formData.website_url}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        website_url: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="image_url">Image URL</Label>
-                  <Input
-                    id="image_url"
-                    type="url"
-                    value={formData.image_url}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        image_url: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <Label htmlFor="contact_info">Contact Information</Label>
-                  <Input
-                    id="contact_info"
-                    value={formData.contact_info}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        contact_info: e.target.value,
-                      }))
-                    }
                   />
                 </div>
               </div>
@@ -503,38 +408,40 @@ export default function AdminDashboard() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {events.map((event) => (
-                        <TableRow key={event.id}>
+                      {events.map((ev) => (
+                        <TableRow key={ev.id}>
                           <TableCell className="font-medium">
-                            {event.title}
+                            {ev.title}
                           </TableCell>
                           <TableCell>
                             <Badge
-                              className={`${getCategoryColor(event.category)}`}
+                              className={`text-xs ${
+                                ev.category?.color ?? "bg-gray-200"
+                              }`}
                             >
-                              {event.category}
+                              {ev.category?.name ?? "Uncategorized"}
                             </Badge>
                           </TableCell>
                           <TableCell className="flex items-center gap-1">
                             <MapPin className="h-3 w-3" />
-                            {event.location_name}
+                            {ev.location_name}
                           </TableCell>
                           <TableCell>
-                            {new Date(event.start_date).toLocaleDateString()}
+                            {new Date(ev.start_date).toLocaleDateString()}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleEdit(event)}
+                                onClick={() => handleEdit(ev)}
                               >
                                 <Edit className="h-3 w-3" />
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleDelete(event.id)}
+                                onClick={() => handleDelete(ev.id)}
                                 className="text-red-600 hover:text-red-700"
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -577,7 +484,11 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {new Set(events.map((e) => e.category)).size}
+                  {
+                    new Set(
+                      events.map((e) => e.category?.name ?? "Uncategorized")
+                    ).size
+                  }
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Different event categories
