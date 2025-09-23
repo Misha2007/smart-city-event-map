@@ -1,13 +1,13 @@
-module.exports = {
-  useRouter: () => ({
-    push: jest.fn(),
-    replace: jest.fn(),
-    refresh: jest.fn(),
-    back: jest.fn(),
-    forward: jest.fn(),
-    prefetch: jest.fn(),
-  }),
-  usePathname: () => "/",
-  useSearchParams: () => new URLSearchParams(),
-  useParams: () => ({}),
-};
+const pushMock = jest.fn();
+
+export const useRouter = jest.fn().mockReturnValue({
+  push: pushMock,
+  replace: jest.fn(),
+  prefetch: jest.fn(),
+});
+
+export const useSearchParams = jest.fn().mockReturnValue({
+  get: jest.fn(),
+});
+
+export { pushMock };

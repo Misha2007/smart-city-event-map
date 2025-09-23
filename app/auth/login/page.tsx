@@ -36,11 +36,15 @@ export default function Page() {
         password,
       });
       if (error) throw error;
+      console.log("worked");
       router.push("/");
     } catch (error: unknown) {
+      console.log(error);
+
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsLoading(false);
+      console.log("finalized");
     }
   };
 
