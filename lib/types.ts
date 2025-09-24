@@ -22,8 +22,10 @@ export interface Event {
   location_name: string;
   latitude: number | 58.395385;
   longitude: number | 26.744548;
-  start_date: string;
-  end_date: string | null;
+  event_date_start: string;
+  event_date_end: string | null;
+  event_time_start: string | null;
+  event_time_end: string | null;
   image_url: string | null;
   website_url: string | null;
   contact_info: string | null;

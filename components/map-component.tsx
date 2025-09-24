@@ -85,7 +85,7 @@ export default function MapComponent({
     // Add new markers
     events.forEach((event) => {
       const coordinates: [number, number] = [event.latitude, event.longitude];
-      const startDate = new Date(event.start_date);
+      const startDate = new Date(event.event_date_start);
       const formattedDate = startDate.toLocaleDateString();
       const formattedTime = startDate.toLocaleTimeString([], {
         hour: "2-digit",
@@ -182,9 +182,13 @@ export default function MapComponent({
             <div className="space-y-2 mb-4">
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span>{formatEventDate(selectedEvent.start_date).date}</span>
-                <Clock className="h-4 w-4 text-muted-foreground ml-2" />
-                <span>{formatEventDate(selectedEvent.start_date).time}</span>
+                <span>{selectedEvent.event_date_start}</span>
+                {selectedEvent.event_time_start && (
+                  <>
+                    <Clock className="h-3 w-3 ml-2" />
+                    {selectedEvent.event_time_start}
+                  </>
+                )}
               </div>
 
               <div className="flex items-center gap-2 text-sm">

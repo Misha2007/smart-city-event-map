@@ -64,13 +64,17 @@ for div in soup.find_all('div', class_='col'):
 
         # Other info
         description = f"Event: {title}"
-        start_date = "2025-09-12T00:00:00"  # placeholder
+        start_date = "2025-09-12"  # placeholder
         location_name = location_time[0].get_text(strip=True) if location_time else ""
-
+        date_time_tag = event_soup.find("small")
+        event_date_start = None
+        event_date_end = None
+        event_time_start = None
+        event_time_end = None
         event_data = {
             "title": title,
             "description": description,
-            "start_date": start_date,
+            "event_date_start": start_date,
             "location_name": location_name,
             "category": category,
             "latitude": latitude,
@@ -79,8 +83,28 @@ for div in soup.find_all('div', class_='col'):
 
         # Insert into Supabase (table name: events)
         try:
-            result = supabase.table("events").insert(event_data).execute()
-            print(f"Inserted: {title}")
+            result = supabase.table("events").select(
+        """
+    id,
+    title,
+    description,
+    event_date_start,
+    event_date_end,
+    location_name,
+    latitude,
+    longitude,
+    category:categories (
+      id,
+      name,
+      slug,
+      icon,
+      color
+      )
+      """
+    ).eq("title", title).execute()
+            if len(result.data) == 0:
+                inserted = supabase.table("events").insert(event_data).execute()
+                print(f"Inserted: {title}")
         except Exception as e:
             print(f"Error inserting event '{title}': {e}")
 

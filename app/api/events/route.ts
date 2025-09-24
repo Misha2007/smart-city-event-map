@@ -19,7 +19,8 @@ export async function GET(request: Request) {
     id,
     title,
     description,
-    start_date,
+    event_date_start,
+    event_date_end,
     location_name,
     latitude,
     longitude,
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
     )
   `
       )
-      .order("start_date", { ascending: true });
+      .order("event_date_start", { ascending: true });
 
     // Apply category filter
     if (category && category !== "all") {
@@ -58,15 +59,15 @@ export async function GET(request: Request) {
             now.getMonth(),
             now.getDate()
           );
-          query = query.gte("start_date", startDate.toISOString());
+          query = query.gte("event_date_start", startDate.toISOString());
           break;
         case "week":
           startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          query = query.gte("start_date", startDate.toISOString());
+          query = query.gte("event_date_start", startDate.toISOString());
           break;
         case "month":
           startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          query = query.gte("start_date", startDate.toISOString());
+          query = query.gte("event_date_start", startDate.toISOString());
           break;
       }
     }

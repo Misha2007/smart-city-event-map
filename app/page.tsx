@@ -81,7 +81,7 @@ function SmartCityEventsMapContent() {
       .toLowerCase()
       .includes(filters.search.toLowerCase());
 
-    const eventDate = new Date(event.start_date);
+    const eventDate = new Date(event.event_date_start);
     const now = new Date();
 
     let matchesDate = true;
@@ -365,7 +365,6 @@ function SmartCityEventsMapContent() {
               </p>
             )}
             {filteredEvents.map((event) => {
-              const { date, time } = formatEventDate(event.start_date);
               return (
                 <Card
                   key={event.id}
@@ -401,9 +400,13 @@ function SmartCityEventsMapContent() {
                   )}
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                     <Calendar className="h-3 w-3" />
-                    {date}
-                    <Clock className="h-3 w-3 ml-2" />
-                    {time}
+                    {event.event_date_start}
+                    {event.event_time_start && (
+                      <>
+                        <Clock className="h-3 w-3 ml-2" />
+                        {event.event_time_start}
+                      </>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                     <MapPin className="h-3 w-3" />

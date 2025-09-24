@@ -58,8 +58,10 @@ interface EventFormData {
   location_name: string;
   latitude: number;
   longitude: number;
-  start_date: string;
-  end_date: string;
+  event_date_start: string;
+  event_date_end: string;
+  event_time_start: string;
+  event_time_end: string;
   image_url: string;
   website_url: string;
   contact_info: string;
@@ -82,8 +84,10 @@ export default function AdminDashboard() {
     location_name: "",
     latitude: 58.3806,
     longitude: 26.7251,
-    start_date: "",
-    end_date: "",
+    event_date_start: "",
+    event_date_end: "",
+    event_time_start: "",
+    event_time_end: "",
     image_url: "",
     website_url: "",
     contact_info: "",
@@ -99,8 +103,10 @@ export default function AdminDashboard() {
         id,
         title,
         description,
-        start_date,
-        end_date,
+        event_date_start,
+        event_date_end,
+        event_time_start,
+        event_time_end,
         location_name,
         latitude,
         longitude,
@@ -161,8 +167,10 @@ export default function AdminDashboard() {
       location_name: "",
       latitude: 58.3806,
       longitude: 26.7251,
-      start_date: "",
-      end_date: "",
+      event_date_start: "",
+      event_date_end: "",
+      event_time_start: "",
+      event_time_end: "",
       image_url: "",
       website_url: "",
       contact_info: "",
@@ -179,10 +187,10 @@ export default function AdminDashboard() {
       location_name: event.location_name,
       latitude: event.latitude,
       longitude: event.longitude,
-      start_date: new Date(event.start_date).toISOString().slice(0, 16),
-      end_date: event.end_date
-        ? new Date(event.end_date).toISOString().slice(0, 16)
-        : "",
+      event_date_start: event.event_date_start?.slice(0, 10) ?? "",
+      event_time_start: event.event_time_start?.slice(0, 5) ?? "",
+      event_date_end: event.event_date_end?.slice(0, 10) ?? "",
+      event_time_end: event.event_time_end?.slice(0, 5) ?? "",
       image_url: event.image_url || "",
       website_url: event.website_url || "",
       contact_info: event.contact_info || "",
@@ -201,10 +209,10 @@ export default function AdminDashboard() {
         location_name: formData.location_name,
         latitude: Number(formData.latitude),
         longitude: Number(formData.longitude),
-        start_date: new Date(formData.start_date).toISOString(),
-        end_date: formData.end_date
-          ? new Date(formData.end_date).toISOString()
-          : null,
+        event_date_start: formData.event_date_start || null,
+        event_time_start: formData.event_time_start || null,
+        event_date_end: formData.event_date_end || null,
+        event_time_end: formData.event_time_end || null,
         image_url: formData.image_url || null,
         website_url: formData.website_url || null,
         contact_info: formData.contact_info || null,
@@ -344,6 +352,144 @@ export default function AdminDashboard() {
                     required
                   />
                 </div>
+
+                <div>
+                  <Label htmlFor="latitude">Latitude *</Label>
+                  <Input
+                    id="latitude"
+                    type="number"
+                    step="any"
+                    value={formData.latitude}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        latitude: Number.parseFloat(e.target.value),
+                      }))
+                    }
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="longitude">Longitude *</Label>
+                  <Input
+                    id="longitude"
+                    type="number"
+                    step="any"
+                    value={formData.longitude}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        longitude: Number.parseFloat(e.target.value),
+                      }))
+                    }
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="start_date">Start Date *</Label>
+                  <Input
+                    id="event_date_start"
+                    type="date"
+                    value={formData.event_date_start}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        event_date_start: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="end_date">Start Time</Label>
+                  <Input
+                    id="event_time_start"
+                    type="time"
+                    value={formData.event_time_start ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        event_time_start: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="end_date">End Date</Label>
+                  <Input
+                    id="event_date_end"
+                    type="date"
+                    value={formData.event_date_end}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        event_date_end: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="end_date">End Time</Label>
+                  <Input
+                    id="event_time_end"
+                    type="time"
+                    value={formData.event_time_end ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        event_time_end: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="website_url">Website URL</Label>
+                  <Input
+                    id="website_url"
+                    type="url"
+                    value={formData.website_url}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        website_url: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="image_url">Image URL</Label>
+                  <Input
+                    id="image_url"
+                    type="url"
+                    value={formData.image_url}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        image_url: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <Label htmlFor="contact_info">Contact Information</Label>
+                  <Input
+                    id="contact_info"
+                    value={formData.contact_info}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        contact_info: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
               </div>
 
               <DialogFooter>
@@ -427,7 +573,15 @@ export default function AdminDashboard() {
                             {ev.location_name}
                           </TableCell>
                           <TableCell>
-                            {new Date(ev.start_date).toLocaleDateString()}
+                            {new Date(ev.event_date_start).toLocaleDateString()}
+                            {ev.event_date_end && (
+                              <>
+                                {" - " +
+                                  new Date(
+                                    ev.event_date_end
+                                  ).toLocaleDateString()}
+                              </>
+                            )}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
@@ -507,7 +661,7 @@ export default function AdminDashboard() {
                 <div className="text-2xl font-bold">
                   {
                     events.filter((e) => {
-                      const eventDate = new Date(e.start_date);
+                      const eventDate = new Date(e.event_date_start);
                       const now = new Date();
                       return (
                         eventDate.getMonth() === now.getMonth() &&
