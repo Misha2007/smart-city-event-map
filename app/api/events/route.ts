@@ -3,15 +3,13 @@ import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
-    console.log("[v0] API route called");
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
     const search = searchParams.get("search");
     const dateRange = searchParams.get("dateRange");
 
-    console.log("[v0] Creating Supabase client");
     const supabase = await createClient();
-
+    const today = new Date().toISOString().slice(0, 10);
     let query = supabase
       .from("events")
       .select(
@@ -20,7 +18,9 @@ export async function GET(request: Request) {
     title,
     description,
     event_date_start,
+    event_time_start,
     event_date_end,
+    event_time_end,
     location_name,
     latitude,
     longitude,
@@ -33,6 +33,7 @@ export async function GET(request: Request) {
     )
   `
       )
+      .or(`event_date_end.gte.${today},event_date_start.gte.${today}`)
       .order("event_date_start", { ascending: true });
 
     // Apply category filter

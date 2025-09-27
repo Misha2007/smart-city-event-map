@@ -5,6 +5,7 @@ import re
 from supabase import create_client
 from dotenv import load_dotenv
 import os
+from time import strptime
 
 # Load .env
 load_dotenv(".env.local")
@@ -19,6 +20,70 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Scraping part
 base_url = "https://kultuuriaken.tartu.ee"
 url = base_url + "/en/events"
+
+CATEGORY_META = {
+    "utensils": {
+        "icon": "Utensils",
+        "color": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+    },
+    "drama": {
+        "icon": "Drama",
+        "color": "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200"
+    },
+    "morehorizontal": {
+        "icon": "MoreHorizontal",
+        "color": "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+    },
+    "school": {
+        "icon": "School",
+        "color": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+    },
+    "film": {
+        "icon": "Film",
+        "color": "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
+    },
+    "image": {
+        "icon": "Image",
+        "color": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+    },
+    "bookopen": {
+        "icon": "BookOpen",
+        "color": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+    },
+    "football": {
+        "icon": "Football",
+        "color": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+    },
+    # Default fallback
+    "other": {
+        "icon": "MoreHorizontal",
+        "color": "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+    }
+}
+
+
+def get_or_create_category(supabase, category_name):
+    slug = category_name.lower().replace(" ", "-")
+
+    meta = CATEGORY_META.get(slug, CATEGORY_META["other"])
+
+    res = supabase.table("categories").select("id").eq("slug", slug).execute()
+    if res.data and len(res.data) > 0:
+        return res.data[0]["id"]
+
+    new_category = {
+        "name": category_name,
+        "slug": slug,
+        "icon": meta["icon"],
+        "color": meta["color"],
+    }
+    insert_res = supabase.table("categories").insert(new_category).execute()
+    if insert_res.data and len(insert_res.data) > 0:
+        return insert_res.data[0]["id"]
+    else:
+        raise Exception("Failed to create category")
+
+
 
 driver = webdriver.Firefox()
 driver.get(url)
@@ -60,23 +125,76 @@ for div in soup.find_all('div', class_='col'):
             li_tag = ul_tag.find("li")
             if li_tag:
                 category = li_tag.get_text(strip=True)
-                print(category)
+                # print(category)
 
         # Other info
         description = f"Event: {title}"
-        start_date = "2025-09-12"  # placeholder
         location_name = location_time[0].get_text(strip=True) if location_time else ""
-        date_time_tag = event_soup.find("small")
+
+        date_time_tag = event_soup.find("h3", class_="mb-4")
         event_date_start = None
         event_date_end = None
         event_time_start = None
         event_time_end = None
+        month_abbreviations = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec"
+        ]
+        newList = []
+        for i in date_time_tag.get_text(strip=True).split("-"):
+            newList2 = []
+            for x in i.split(" "):
+                if x:
+                    if x in month_abbreviations or i.split(" ").index(x) == 0 or x.isnumeric() or ":" in x:
+                        if ":" in x:
+                            newList2.append(x[:5]) 
+                        else:
+                            if i.split(" ").index(x) == 0: 
+                                newList2.append(x[3:5]) 
+                            else:
+                                newList2.append(x) 
+            newList.append(newList2)  
+       
+        month_num = strptime(newList[0][1], '%b').tm_mon
+        month_str = f"{month_num:02d}"  
+
+        event_date_start = f"{month_str}-{newList[0][0]}-{newList[0][2]}"
+
+        if len(newList[0]) > 3:
+            event_time_start = newList[0][3]
+
+        if len(newList) > 1:
+            second_entry = newList[1]
+            
+            if len(second_entry) > 3:
+                event_date_end = f"{month_str}-{second_entry[0]}-{second_entry[2]}"
+                event_time_end = second_entry[3]
+            else:
+                event_time_end = second_entry[0]
+        try:
+            category_id = get_or_create_category(supabase, category)
+        except Exception as e:
+            print(f"Category handling error: {e}")
+            category_id = None
         event_data = {
             "title": title,
             "description": description,
-            "event_date_start": start_date,
+            "event_date_start": event_date_start,
+            "event_time_start": event_time_start,
+            "event_date_end": event_date_end,
+            "event_time_end": event_time_end,
             "location_name": location_name,
-            "category": category,
+            "category_id": category_id, 
             "latitude": latitude,
             "longitude": longitude
         }
@@ -89,7 +207,9 @@ for div in soup.find_all('div', class_='col'):
     title,
     description,
     event_date_start,
+    event_time_start,
     event_date_end,
+    event_time_end,
     location_name,
     latitude,
     longitude,

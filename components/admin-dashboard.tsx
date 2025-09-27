@@ -67,6 +67,26 @@ interface EventFormData {
   contact_info: string;
 }
 
+function formatTime(time: string) {
+  let fixedTime = time;
+
+  if (/\+\d{2}$/.test(time)) {
+    fixedTime = time + ":00";
+  }
+
+  const date = new Date(`1970-01-01T${fixedTime}`);
+
+  if (isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 export default function AdminDashboard() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -550,6 +570,7 @@ export default function AdminDashboard() {
                         <TableHead>Category</TableHead>
                         <TableHead>Location</TableHead>
                         <TableHead>Date</TableHead>
+                        <TableHead>Time</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -581,6 +602,14 @@ export default function AdminDashboard() {
                                     ev.event_date_end
                                   ).toLocaleDateString()}
                               </>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {ev.event_time_start
+                              ? formatTime(ev.event_time_start)
+                              : "None"}
+                            {ev.event_time_end && (
+                              <>{" - " + formatTime(ev.event_time_end)}</>
                             )}
                           </TableCell>
                           <TableCell>

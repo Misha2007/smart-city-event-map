@@ -40,6 +40,26 @@ interface MapComponentProps {
   onEventSelect: (event: Event | null) => void;
 }
 
+function formatTime(time: string) {
+  let fixedTime = time;
+
+  if (/\+\d{2}$/.test(time)) {
+    fixedTime = time + ":00";
+  }
+
+  const date = new Date(`1970-01-01T${fixedTime}`);
+
+  if (isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
 export default function MapComponent({
   events,
   selectedEvent,
@@ -183,10 +203,18 @@ export default function MapComponent({
               <div className="flex items-center gap-2 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span>{selectedEvent.event_date_start}</span>
+                {selectedEvent.event_date_end && (
+                  <>{" - " + selectedEvent.event_date_end}</>
+                )}
                 {selectedEvent.event_time_start && (
                   <>
                     <Clock className="h-3 w-3 ml-2" />
-                    {selectedEvent.event_time_start}
+                    {selectedEvent.event_time_start
+                      ? formatTime(selectedEvent.event_time_start)
+                      : "None"}
+                    {selectedEvent.event_time_end && (
+                      <>{" - " + formatTime(selectedEvent.event_time_end)}</>
+                    )}
                   </>
                 )}
               </div>

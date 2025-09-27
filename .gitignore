@@ -42,5 +42,6 @@ next-env.d.ts
 
 # Events data
 data.json
+data_films.json
 
 /venv

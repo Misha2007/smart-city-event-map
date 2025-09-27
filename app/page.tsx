@@ -15,19 +15,20 @@ import {
 import {
   MapPin,
   Calendar,
-  Clock,
   Search,
   Filter,
   Menu,
   X,
   Heart,
   HeartOff,
+  Loader2,
 } from "lucide-react";
 import type { Event, Category, EventFilters } from "@/lib/types";
 import AuthButton from "@/components/auth-button";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 import { createClient } from "@/lib/supabase/client";
+import MainMenu from "@/components/main-menu";
 
 // Dynamically import the map component to avoid SSR issues
 const MapComponent = dynamic(() => import("@/components/map-component"), {
@@ -58,6 +59,7 @@ const dateRanges = [
 function SmartCityEventsMapContent() {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(true);
   const [filters, setFilters] = useState<EventFilters>({
     category: "all",
     search: "",
@@ -129,6 +131,7 @@ function SmartCityEventsMapContent() {
 
       const data = await response.json();
       setEventsData(data);
+      console.log("sjdls");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       console.error("Error fetching events:", err);
@@ -136,7 +139,6 @@ function SmartCityEventsMapContent() {
       setLoading(false);
     }
   };
-
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -215,6 +217,15 @@ function SmartCityEventsMapContent() {
 
     getCategories();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading Smart City Events Map...</span>
+      </div>
+    );
+  }
 
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -358,11 +369,16 @@ function SmartCityEventsMapContent() {
 
           {/* Events List */}
           <div className="flex-1 overflow-y-auto space-y-3">
-            <h3 className="text-sm font-medium text-foreground">Events</h3>
-            {filteredEvents.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No events found.
-              </p>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-foreground">
+                Events ({loading ? "..." : filteredEvents.length})
+              </h3>
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+            </div>
+            {!loading && filteredEvents.length === 0 && (
+              <div className="text-sm text-muted-foreground text-center py-8">
+                No events found matching your criteria.
+              </div>
             )}
             {filteredEvents.map((event) => {
               return (
@@ -401,11 +417,8 @@ function SmartCityEventsMapContent() {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                     <Calendar className="h-3 w-3" />
                     {event.event_date_start}
-                    {event.event_time_start && (
-                      <>
-                        <Clock className="h-3 w-3 ml-2" />
-                        {event.event_time_start}
-                      </>
+                    {event.event_date_end && (
+                      <>{" - " + event.event_date_end}</>
                     )}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
@@ -428,6 +441,18 @@ function SmartCityEventsMapContent() {
 
       {/* Main Map Area */}
       <div className="flex-1 relative">
+        <div className="absolute z-1000 right-10 top-5 p-2 rounded-md bg-card-100 flex-col">
+          <MainMenu />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setMenuOpen(false)}
+            className="lg:hidden"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
         {!sidebarOpen && (
           <Button
             variant="default"
