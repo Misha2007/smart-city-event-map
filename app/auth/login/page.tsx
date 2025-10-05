@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { createClient } from "@/lib/supabase/client";
+// import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,17 +26,35 @@ export default function Page() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
+    // const supabase = createClient();
     setIsLoading(true);
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // const { data, error } = await supabase.auth.signInWithPassword({
+      //   email,
+      //   password,
+      // });
+
+      // if (error) throw error;
+
+      const response = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+        credentials: "include",
       });
-      if (error) throw error;
-      console.log("worked");
+
+      if (!response.ok) {
+        throw new Error("Failed to login on the backend");
+      }
+
+      console.log("Login successful!");
       router.push("/");
     } catch (error: unknown) {
       console.log(error);

@@ -43,34 +43,28 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
+      const response = await fetch("http://localhost:5000/api/profile", {
+        method: "GET",
+        credentials: "include",
+      });
 
-      if (error || !user) {
+      if (response.status === 401) {
         router.push("/");
         return;
       }
 
-      setUser(user);
+      if (response.ok) {
+        const { user, profile } = await response.json();
 
-      const seed = user.email || user.id;
-      const avatars = generateAvatarUrls(seed);
-      setAvatarOptions(avatars);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name, avatar_url, bio")
-        .eq("id", user.id)
-        .single();
-
-      if (profile) {
+        setUser(user);
+        const seed = user.email || user.id;
+        const avatars = generateAvatarUrls(seed);
+        setAvatarOptions(avatars);
         setDisplayName(profile.display_name || "");
-        setAvatarUrl(profile.avatar_url || avatars[0]); // fallback
+        setAvatarUrl(profile.avatar_url || avatars[0]);
         setBio(profile.bio || "");
       } else {
-        setAvatarUrl(avatars[0]); // fallback if no profile
+        router.push("/");
       }
 
       setLoading(false);
@@ -81,18 +75,51 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     setSaving(true);
-    await supabase.from("profiles").upsert({
-      id: user.id,
-      display_name: displayName,
-      avatar_url: avatarUrl,
-      bio,
-    });
-    setSaving(false);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/profile", {
+        method: "POST",
+        credentials: "include", // Include the session cookie for authentication
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          display_name: displayName,
+          avatar_url: avatarUrl,
+          bio,
+        }),
+      });
+
+      if (response.ok) {
+        setSaving(false);
+        // Handle success, show a message, etc.
+      } else {
+        // Handle error
+        setSaving(false);
+        console.log("Error updating profile");
+      }
+    } catch (error) {
+      setSaving(false);
+      console.log("Error:", error);
+    }
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
+    try {
+      // Make POST request to backend to log out
+      const response = await fetch("http://localhost:5000/api/logout", {
+        method: "POST",
+        credentials: "include", // Include cookies for authentication
+      });
+
+      if (response.ok) {
+        router.push("/");
+      } else {
+        console.error("Error during logout");
+      }
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
   };
 
   if (loading) {
