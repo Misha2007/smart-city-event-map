@@ -374,6 +374,60 @@ app.post("/api/favorites/toggle", authenticateUser, async (req, res) => {
   }
 });
 
+app.get("/api/movies", async (req, res) => {
+  try {
+    const { data: movieLanguages } = await supabase
+      .from("movie_languages")
+      .select("movie:movies(*), language:languages(name)");
+
+    const { data: movieSubtitles } = await supabase
+      .from("movie_subtitles")
+      .select("movie:movies(*), subtitle:subtitles(name)");
+
+    const { data: movieFormats } = await supabase
+      .from("movie_formats")
+      .select("movie:movies(*), format:formats(name)");
+
+    const { data: movieGenres } = await supabase
+      .from("movie_genres")
+      .select("movie:movies(*), genre:genres(name)");
+
+    const moviesMap = {};
+
+    function addToMovieMap(source, key, nestedKey) {
+      for (const row of source) {
+        const movie = row.movie;
+        if (!moviesMap[movie.id]) {
+          moviesMap[movie.id] = {
+            ...movie,
+            genres: [],
+            languages: [],
+            subtitles: [],
+            formats: [],
+          };
+        }
+
+        const value = row[nestedKey]?.name;
+        if (value && !moviesMap[movie.id][key].includes(value)) {
+          moviesMap[movie.id][key].push(value);
+        }
+      }
+    }
+
+    addToMovieMap(movieLanguages, "languages", "language");
+    addToMovieMap(movieSubtitles, "subtitles", "subtitle");
+    addToMovieMap(movieFormats, "formats", "format");
+    addToMovieMap(movieGenres, "genres", "genre");
+
+    const movies = Object.values(moviesMap);
+
+    res.json(movies);
+  } catch (error) {
+    console.error("Failed to fetch favorites:", error);
+    res.status(500).json({ error: "Failed to fetch favorites" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Backend is running on http://localhost:${port}`);
 });
