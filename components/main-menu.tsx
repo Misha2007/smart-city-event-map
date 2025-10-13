@@ -25,14 +25,14 @@ export default function MainMenu() {
 
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="cursor-pointer flex items-center">
+          <Link href="/" className="cursor-pointer flex items-center">
             <Home className="mr-2 h-4 w-4" />
             <span className="text-left">Home</span>
           </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem asChild>
-          <Link href="/" className="cursor-pointer flex items-center">
+          <Link href="/movies" className="cursor-pointer flex items-center">
             <Film className="mr-2 h-4 w-4" />
             <span className="text-left">Cinema Movies</span>
           </Link>

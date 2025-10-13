@@ -38,17 +38,34 @@ def insert_if_not_exists(table_name, match_dict, insert_dict):
 soup = BeautifulSoup(response)
 films = []
 
-for div in soup.find_all('div', class_='schedule-card__title-container'):
-    genres = [i.get_text(strip=True) for i in div.find_all('span', class_='schedule-card__genre')]
-    title = div.find('p').get_text(strip=True)  
-    if not any(film['title'] == title for film in films):
-        films.append({
-            'title': title,
-            'genres': genres,
-            'languages': [],  
-            'subtitles': [], 
-            'formats': []
-        })
+for film_div in soup.find_all('div', class_='schedule-card__inner'):
+    img = film_div.find('img')['data-srcset']
+    img_url = "https://" + img.split(",")[-1].split()[0][2:]
+
+    title_container = film_div.find('div', class_='schedule-card__title-container')
+    if not title_container:
+        title_container = film_div.find_next_sibling('div', class_='schedule-card__title-container')
+
+    if title_container:
+        genres_raw = [i.get_text(strip=True) for i in title_container.find_all('span', class_='schedule-card__genre')]
+        genres = []
+        for genre_text in genres_raw:
+            split_genres = [g.strip().rstrip(',') for g in genre_text.split(',')]
+            genres.extend(split_genres)
+        genres = list({g for g in genres if g})
+
+        title = title_container.find('p').get_text(strip=True)
+
+        if not any(film['title'] == title for film in films):
+            films.append({
+                'title': title,
+                'img_url': img_url,
+                'genres': genres,
+                'languages': [],
+                'subtitles': [],
+                'formats': []
+            })
+
 
 for div in soup.find_all('div', class_='schedule-card__options'):
     language = None
@@ -85,7 +102,7 @@ for div in soup.find_all('div', class_='schedule-card__options'):
                 result = supabase.table("movies").select("id").eq("title", film['title']).execute()
                 
                 if len(result.data) == 0:
-                    inserted_movie = supabase.table("movies").insert({"title": film['title']}).execute()
+                    inserted_movie = supabase.table("movies").insert({"title": film['title'], "img_url": film['img_url']}).execute()
                     movie_id = inserted_movie.data[0]['id']
                     print(f"Inserted movie: {film['title']}")
                 else:

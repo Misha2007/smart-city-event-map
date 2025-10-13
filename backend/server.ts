@@ -428,6 +428,46 @@ app.get("/api/movies", async (req, res) => {
   }
 });
 
+app.get("/api/movies/genres", async (req, res) => {
+  try {
+    const { data: genres } = await supabase.from("genres").select("*");
+    res.json(genres);
+  } catch (error) {
+    console.error("Failed to fetch favorites:", error);
+    res.status(500).json({ error: "Failed to fetch favorites" });
+  }
+});
+
+app.get("/api/movies/languages", async (req, res) => {
+  try {
+    const { data: languages } = await supabase.from("languages").select("*");
+    res.json(languages);
+  } catch (error) {
+    console.error("Failed to fetch favorites:", error);
+    res.status(500).json({ error: "Failed to fetch favorites" });
+  }
+});
+
+app.get("/api/movies/subtitles", async (req, res) => {
+  try {
+    const { data: subtitles } = await supabase.from("subtitles").select("*");
+    res.json(subtitles);
+  } catch (error) {
+    console.error("Failed to fetch favorites:", error);
+    res.status(500).json({ error: "Failed to fetch favorites" });
+  }
+});
+
+app.get("/api/movies/formats", async (req, res) => {
+  try {
+    const { data: formats } = await supabase.from("formats").select("*");
+    res.json(formats);
+  } catch (error) {
+    console.error("Failed to fetch favorites:", error);
+    res.status(500).json({ error: "Failed to fetch favorites" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Backend is running on http://localhost:${port}`);
 });
