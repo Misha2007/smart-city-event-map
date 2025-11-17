@@ -3,6 +3,14 @@ import cors from "cors";
 import { createClient } from "@supabase/supabase-js";
 import cookieParser from "cookie-parser";
 import { authenticateUser } from "./authenticationMiddleware.ts";
+import {
+  Client,
+  Environment,
+  OrdersController,
+  ApiError,
+  CheckoutPaymentIntent,
+} from "@paypal/paypal-server-sdk";
+
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -12,6 +20,8 @@ const port = 5000;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const FRONTEND_URL = process.env.FRONTEND_URL;
+const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
+const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
 
 app.use(
   cors({
@@ -36,6 +46,16 @@ declare global {
     }
   }
 }
+const client = new Client({
+  clientCredentialsAuthCredentials: {
+    oAuthClientId: PAYPAL_CLIENT_ID,
+    oAuthClientSecret: PAYPAL_CLIENT_SECRET,
+  },
+  environment: Environment.Sandbox,
+  timeout: 10000,
+});
+
+const ordersController = new OrdersController(client);
 
 app.use(cookieParser());
 
@@ -465,6 +485,85 @@ app.get("/api/movies/formats", async (req, res) => {
   } catch (error) {
     console.error("Failed to fetch favorites:", error);
     res.status(500).json({ error: "Failed to fetch favorites" });
+  }
+});
+
+app.post("/api/paypal/order/create", async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    if (!amount) {
+      return res.status(400).json({ error: "Amount is required" });
+    }
+
+    // Construct the order request for a donation
+    const collect = {
+      body: {
+        intent: CheckoutPaymentIntent.Capture,
+        purchaseUnits: [
+          {
+            amount: {
+              currencyCode: "USD",
+              value: amount.toString(),
+            },
+          },
+        ],
+        applicationContext: {
+          returnUrl: "",
+          shippingPreference: "NO_SHIPPING",
+          userAction: "PAY_NOW",
+        },
+      },
+    };
+
+    console.log("Creating PayPal order with:", collect);
+
+    const ordersController = new OrdersController(client);
+    console.log(
+      "ordersController prototype methods:",
+      Object.getOwnPropertyNames(Object.getPrototypeOf(ordersController))
+    );
+    console.log("ordersController own keys:", Object.keys(ordersController));
+
+    // Create the order using OrdersController
+    const { result } = await ordersController.createOrder(collect);
+    console.log("PayPal order created:", result);
+    // Extract the approval URL
+    const approvalUrl = result.links.find(
+      (link: any) => link.rel === "approve"
+    )?.href;
+
+    if (!approvalUrl) {
+      return res
+        .status(500)
+        .json({ error: "Approval URL not found in the PayPal response" });
+    }
+
+    // Send the approval URL to the client for redirecting the user
+    return res.json(result);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      const errors = error.result;
+      console.error("PayPal API Error:", errors);
+      return res
+        .status(500)
+        .json({ error: "Error creating PayPal order", details: errors });
+    }
+    console.error("Unexpected Error:", error);
+    return res.status(500).json({ error: "Unexpected error" });
+  }
+});
+
+app.post("/api/paypal/order/capture", async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    if (!orderId) return res.status(400).json({ error: "orderId is required" });
+    console.log("Capturing PayPal order with ID:", orderId);
+    const { result } = await ordersController.captureOrder({ id: orderId });
+    return res.json(result);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Error capturing order" });
   }
 });
 
