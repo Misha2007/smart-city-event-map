@@ -31,11 +31,14 @@ export default function PaypalCardForm() {
   // Create the order with the selected amount
   async function createOrder() {
     try {
-      const res = await fetch("http://localhost:5000/api/paypal/order/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/paypal/order/create`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount }),
+        }
+      );
 
       const dataResponse = await res.json();
       if (dataResponse.status === "CREATED") {
@@ -53,7 +56,7 @@ export default function PaypalCardForm() {
   async function onApprove(data, actions) {
     try {
       const res = await fetch(
-        "http://localhost:5000/api/paypal/order/capture",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/paypal/order/capture`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -94,13 +97,13 @@ export default function PaypalCardForm() {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50 p-8">
+    <div className="flex justify-center items-center min-h-screen bg-white p-8">
       {/* {error && (
         <div>
           <h3>{error}</h3>
         </div>
       )} */}
-      <div className="max-w-lg w-full bg-white shadow-lg rounded-xl p-8 border border-gray-200">
+      <div className="max-w-lg w-full  bg-card shadow-lg rounded-xl p-8 border border-gray-200">
         <div className="mb-6">
           <label htmlFor="amount" className="block text-lg font-semibold mb-2">
             Select Donation Amount
@@ -109,7 +112,9 @@ export default function PaypalCardForm() {
             <div
               onClick={() => setAmount("10.00")}
               className={`cursor-pointer w-1/4 p-4 text-center rounded-lg border border-gray-300 ${
-                amount === "10.00" ? "bg-gray-200" : "hover:bg-gray-100"
+                amount === "10.00"
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-gray-100"
               }`}
             >
               $10
@@ -117,7 +122,9 @@ export default function PaypalCardForm() {
             <div
               onClick={() => setAmount("20.00")}
               className={`cursor-pointer w-1/4 p-4 text-center rounded-lg border border-gray-300 ${
-                amount === "20.00" ? "bg-gray-200" : "hover:bg-gray-100"
+                amount === "20.00"
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-gray-100"
               }`}
             >
               $20
@@ -125,7 +132,9 @@ export default function PaypalCardForm() {
             <div
               onClick={() => setAmount("50.00")}
               className={`cursor-pointer w-1/4 p-4 text-center rounded-lg border border-gray-300 ${
-                amount === "50.00" ? "bg-gray-200" : "hover:bg-gray-100"
+                amount === "50.00"
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-gray-100"
               }`}
             >
               $50
@@ -133,7 +142,9 @@ export default function PaypalCardForm() {
             <div
               onClick={() => setAmount("100.00")}
               className={`cursor-pointer w-1/4 p-4 text-center rounded-lg border border-gray-300 ${
-                amount === "100.00" ? "bg-gray-200" : "hover:bg-gray-100"
+                amount === "100.00"
+                  ? "bg-primary text-primary-foreground"
+                  : "hover:bg-gray-100"
               }`}
             >
               $100

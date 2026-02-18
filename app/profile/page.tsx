@@ -43,10 +43,13 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const response = await fetch("http://localhost:5000/api/profile", {
-        method: "GET",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/profile`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
 
       if (response.status === 401) {
         router.push("/");
@@ -77,18 +80,21 @@ export default function ProfilePage() {
     setSaving(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/profile", {
-        method: "POST",
-        credentials: "include", // Include the session cookie for authentication
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          display_name: displayName,
-          avatar_url: avatarUrl,
-          bio,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/profile`,
+        {
+          method: "POST",
+          credentials: "include", // Include the session cookie for authentication
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            display_name: displayName,
+            avatar_url: avatarUrl,
+            bio,
+          }),
+        }
+      );
 
       if (response.ok) {
         setSaving(false);
@@ -107,10 +113,13 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     try {
       // Make POST request to backend to log out
-      const response = await fetch("http://localhost:5000/api/logout", {
-        method: "POST",
-        credentials: "include", // Include cookies for authentication
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/logout`,
+        {
+          method: "POST",
+          credentials: "include", // Include cookies for authentication
+        }
+      );
 
       if (response.ok) {
         router.push("/");

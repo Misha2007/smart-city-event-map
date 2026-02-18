@@ -29,6 +29,7 @@ app.use(
     credentials: true,
   })
 );
+
 app.use(express.json());
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
@@ -60,7 +61,7 @@ const ordersController = new OrdersController(client);
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
-  res.send("Hello, World!");
+  // res.send("Hello, World!");
 });
 
 app.get("/supabase", (req, res) => {

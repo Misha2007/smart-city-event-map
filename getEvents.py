@@ -85,7 +85,7 @@ def get_or_create_category(supabase, category_name):
 
 
 
-driver = webdriver.Firefox()
+driver = webdriver.Chrome()
 driver.get(url)
 sleep(2)
 
@@ -151,19 +151,23 @@ for div in soup.find_all('div', class_='col'):
             "Dec"
         ]
         newList = []
-        for i in date_time_tag.get_text(strip=True).split("-"):
-            newList2 = []
-            for x in i.split(" "):
-                if x:
-                    if x in month_abbreviations or i.split(" ").index(x) == 0 or x.isnumeric() or ":" in x:
-                        if ":" in x:
-                            newList2.append(x[:5]) 
-                        else:
-                            if i.split(" ").index(x) == 0: 
-                                newList2.append(x[3:5]) 
+        try:
+            for i in date_time_tag.get_text(strip=True).split("-"):
+                newList2 = []
+                for x in i.split(" "):
+                    if x:
+                        if x in month_abbreviations or i.split(" ").index(x) == 0 or x.isnumeric() or ":" in x:
+                            if ":" in x:
+                                newList2.append(x[:5]) 
                             else:
-                                newList2.append(x) 
-            newList.append(newList2)  
+                                if i.split(" ").index(x) == 0: 
+                                    newList2.append(x[3:5]) 
+                                else:
+                                    newList2.append(x) 
+                newList.append(newList2)  
+        except Exception as e:
+            print(f"Date parsing error for event '{title}': {e}")
+            continue
        
         month_num = strptime(newList[0][1], '%b').tm_mon
         month_str = f"{month_num:02d}"  

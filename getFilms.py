@@ -16,7 +16,7 @@ print(f"Supabase URL: {SUPABASE_URL}")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-driver = webdriver.Firefox()
+driver = webdriver.Chrome()
 
 driver.get(url)
 driver.find_element("xpath", '//*[@id="article-ajax-content-3062"]/div[1]/form/div/div[1]/div[2]/fieldset/div/div[2]').click()

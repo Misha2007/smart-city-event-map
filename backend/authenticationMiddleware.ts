@@ -15,7 +15,7 @@ export const authenticateUser = async (
 ) => {
   const sessionToken = req.cookies[process.env.COOKIE_NAME!];
 
-  console.log(sessionToken);
+  console.log("session", sessionToken);
   if (!sessionToken) {
     return res
       .status(401)

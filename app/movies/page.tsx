@@ -44,9 +44,12 @@ export default function FavoritemoviesPage() {
   useEffect(() => {
     const fetchmovies = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/movies", {
-          credentials: "include",
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}api/movies`,
+          {
+            credentials: "include",
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Failed to fetch movies");
@@ -69,9 +72,12 @@ export default function FavoritemoviesPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/movies/genres", {
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/movies/genres`,
+        {
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch movies");
@@ -89,9 +95,12 @@ export default function FavoritemoviesPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/movies/formats", {
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/movies/formats`,
+        {
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch movies");
@@ -110,7 +119,7 @@ export default function FavoritemoviesPage() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/movies/languages",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/movies/languages`,
         {
           credentials: "include",
         }
@@ -133,7 +142,7 @@ export default function FavoritemoviesPage() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/movies/subtitles",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/movies/subtitles`,
         {
           credentials: "include",
         }
@@ -209,13 +218,13 @@ export default function FavoritemoviesPage() {
             Home
           </Link>
           <Link
-            href="/"
+            href="/plays"
             className="cursor-pointer flex items-center pr-4 pl-4 border-r-2"
           >
             Theater plays
           </Link>
           <Link
-            href="/"
+            href="/sponsorship"
             className="cursor-pointer flex items-center pl-4 pr-4 border-r-2"
           >
             Sponsorship

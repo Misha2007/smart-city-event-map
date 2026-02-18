@@ -17,9 +17,12 @@ export default function FavoriteEventsPage() {
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/favorites", {
-          credentials: "include",
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}api/favorites`,
+          {
+            credentials: "include",
+          }
+        );
 
         if (response.status === 401) {
           router.push("/");

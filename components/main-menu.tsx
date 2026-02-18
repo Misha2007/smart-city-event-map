@@ -39,14 +39,17 @@ export default function MainMenu() {
         </DropdownMenuItem>
 
         <DropdownMenuItem asChild>
-          <Link href="/favorites" className="cursor-pointer flex items-center">
+          <Link href="/plays" className="cursor-pointer flex items-center">
             <Theater className="mr-2 h-4 w-4" />
             <span className="text-left">Theater Plays</span>
           </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem asChild>
-          <Link href="/favorites" className="cursor-pointer flex items-center">
+          <Link
+            href="/sponsorship"
+            className="cursor-pointer flex items-center"
+          >
             <Coins className="mr-2 h-4 w-4" />
             <span className="text-left">Become a sponsor</span>
           </Link>

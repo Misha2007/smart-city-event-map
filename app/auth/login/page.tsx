@@ -38,23 +38,26 @@ export default function Page() {
 
       // if (error) throw error;
 
-      const response = await fetch("http://localhost:5000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to login on the backend");
       }
 
-      console.log("Login successful!");
+      console.log("Login successful!", response);
       router.push("/");
     } catch (error: unknown) {
       console.log(error);

@@ -29,10 +29,13 @@ export default function AuthButton() {
 
   useEffect(() => {
     const getUser = async () => {
-      const response = await fetch("http://localhost:5000/api/session", {
-        method: "GET",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/session`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
       const data = await response.json();
 
       if (data.user) {
@@ -50,10 +53,13 @@ export default function AuthButton() {
   }, []);
 
   const handleSignOut = async () => {
-    const response = await fetch("http://localhost:5000/api/logout", {
-      method: "POST",
-      credentials: "include",
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}api/logout`,
+      {
+        method: "POST",
+        credentials: "include",
+      }
+    );
 
     if (response.ok) {
       router.push("/");

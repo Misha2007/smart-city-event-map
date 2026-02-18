@@ -116,9 +116,11 @@ function SmartCityEventsMapContent() {
         params.append("dateRange", filters.dateRange);
 
       const response = await fetch(
-        `http://localhost:5000/api/events?${params.toString()}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/events/?${params.toString()}`
       );
       if (!response.ok) {
+        console.log(response);
+
         throw new Error("Failed to fetch events");
       }
 
@@ -144,9 +146,12 @@ function SmartCityEventsMapContent() {
     const fetchFavorites = async () => {
       setLoading(true);
       try {
-        const response = await fetch("http://localhost:5000/api/favorites", {
-          credentials: "include",
-        });
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}api/favorites`,
+          {
+            credentials: "include",
+          }
+        );
         if (response.ok) {
           const { favorites } = await response.json();
           const ids = favorites.map((event) => event.id);
@@ -167,12 +172,15 @@ function SmartCityEventsMapContent() {
 
   const toggleFavorite = async (eventId: string) => {
     try {
-      const res = await fetch("http://localhost:5000/api/favorites/toggle", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId }),
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/favorites/toggle`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventId }),
+          credentials: "include",
+        }
+      );
 
       if (!res.ok) throw new Error("Failed to toggle favorite");
 
@@ -191,8 +199,11 @@ function SmartCityEventsMapContent() {
     const fetchCategories = async () => {
       setLoading(true);
       try {
-        const response = await fetch("http://localhost:5000/api/categories");
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}api/categories`
+        );
         if (!response.ok) throw new Error("Failed to fetch categories");
+        console.log(response);
         const categories = await response.json();
         setCategories(categories);
       } catch (error) {

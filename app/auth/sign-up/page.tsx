@@ -37,17 +37,20 @@ export default function Page() {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/register`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
