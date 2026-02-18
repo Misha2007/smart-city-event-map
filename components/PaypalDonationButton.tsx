@@ -37,7 +37,7 @@ export default function PaypalCardForm() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ amount }),
-        }
+        },
       );
 
       const dataResponse = await res.json();
@@ -61,7 +61,7 @@ export default function PaypalCardForm() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId: data.orderID }),
-        }
+        },
       );
 
       const orderData = await res.json();
@@ -97,7 +97,7 @@ export default function PaypalCardForm() {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-white p-8">
+    <div className="flex justify-center items-center h-[80svh] bg-white p-8">
       {/* {error && (
         <div>
           <h3>{error}</h3>

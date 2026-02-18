@@ -5,6 +5,7 @@ import json
 from supabase import create_client
 from dotenv import load_dotenv
 import os
+from selenium.webdriver.chrome.options import Options
 
 url = f'https://www.apollokino.ee/schedule?theatreAreaID=1015'
 load_dotenv(".env.local")
@@ -15,6 +16,11 @@ SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 print(f"Supabase URL: {SUPABASE_URL}")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+options = Options()
+options.add_argument("--headless=new") 
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
 
 driver = webdriver.Chrome()
 

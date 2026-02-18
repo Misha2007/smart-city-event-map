@@ -6,6 +6,7 @@ from supabase import create_client
 from dotenv import load_dotenv
 import os
 from time import strptime
+from selenium.webdriver.chrome.options import Options
 
 # Load .env
 load_dotenv(".env.local")
@@ -83,6 +84,10 @@ def get_or_create_category(supabase, category_name):
     else:
         raise Exception("Failed to create category")
 
+options = Options()
+options.add_argument("--headless=new") 
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
 
 
 driver = webdriver.Chrome()
