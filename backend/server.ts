@@ -9,6 +9,7 @@ import {
   OrdersController,
   ApiError,
   CheckoutPaymentIntent,
+  OrderRequest
 } from "@paypal/paypal-server-sdk";
 
 import dotenv from "dotenv";
@@ -498,7 +499,7 @@ app.post("/api/paypal/order/create", async (req, res) => {
     }
 
     // Construct the order request for a donation
-    body: OrderRequest {
+    const body: OrderRequest = {
         intent: "CAPTURE",
         purchaseUnits: [
           {
@@ -513,7 +514,7 @@ app.post("/api/paypal/order/create", async (req, res) => {
           shippingPreference: "NO_SHIPPING"  as any,
           userAction: "PAY_NOW",
         },
-      },
+    };
 
     console.log("Creating PayPal order with:", body);
 
