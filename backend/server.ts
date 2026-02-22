@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import { createClient } from "@supabase/supabase-js";
 import cookieParser from "cookie-parser";
-import { authenticateUser } from "./authenticationMiddleware";
+import { authenticateUser } from "./authenticationMiddleware.js";
 import {
   Client,
   Environment,
@@ -500,7 +500,7 @@ app.post("/api/paypal/order/create", async (req, res) => {
     // Construct the order request for a donation
     const collect = {
       body: {
-        intent: CheckoutPaymentIntent.Capture,
+        intent: "CAPTURE",
         purchaseUnits: [
           {
             amount: {
