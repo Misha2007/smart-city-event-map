@@ -498,8 +498,7 @@ app.post("/api/paypal/order/create", async (req, res) => {
     }
 
     // Construct the order request for a donation
-    const collect = {
-      body: {
+    body: OrderRequest {
         intent: "CAPTURE",
         purchaseUnits: [
           {
@@ -515,9 +514,8 @@ app.post("/api/paypal/order/create", async (req, res) => {
           userAction: "PAY_NOW",
         },
       },
-    };
 
-    console.log("Creating PayPal order with:", collect);
+    console.log("Creating PayPal order with:", body);
 
     const ordersController = new OrdersController(client);
     console.log(
@@ -527,7 +525,9 @@ app.post("/api/paypal/order/create", async (req, res) => {
     console.log("ordersController own keys:", Object.keys(ordersController));
 
     // Create the order using OrdersController
-    const { result } = await ordersController.createOrder(collect);
+    const { result } = await ordersController.createOrder({
+      body,
+    });
     console.log("PayPal order created:", result);
     // Extract the approval URL
     const approvalUrl = result.links.find(
