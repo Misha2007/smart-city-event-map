@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import { createClient } from "@supabase/supabase-js";
 import cookieParser from "cookie-parser";
-import { authenticateUser } from "./authenticationMiddleware.ts";
+import { authenticateUser } from "./authenticationMiddleware";
 import {
   Client,
   Environment,
@@ -511,7 +511,7 @@ app.post("/api/paypal/order/create", async (req, res) => {
         ],
         applicationContext: {
           returnUrl: "",
-          shippingPreference: "NO_SHIPPING",
+          shippingPreference: "NO_SHIPPING"  as any,
           userAction: "PAY_NOW",
         },
       },
