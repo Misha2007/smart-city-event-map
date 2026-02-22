@@ -8,6 +8,7 @@ import {
   Environment,
   OrdersController,
   ApiError,
+  OrderApplicationContextUserAction,
   CheckoutPaymentIntent
 } from "@paypal/paypal-server-sdk";
 import type { OrderRequest } from "@paypal/paypal-server-sdk";
