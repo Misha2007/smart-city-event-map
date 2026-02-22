@@ -8,9 +8,9 @@ import {
   Environment,
   OrdersController,
   ApiError,
-  CheckoutPaymentIntent,
-  OrderRequest
+  CheckoutPaymentIntent
 } from "@paypal/paypal-server-sdk";
+import type { OrderRequest } from "@paypal/paypal-server-sdk";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -500,7 +500,7 @@ app.post("/api/paypal/order/create", async (req, res) => {
 
     // Construct the order request for a donation
     const body: OrderRequest = {
-        intent: "CAPTURE",
+        intent: CheckoutPaymentIntent.Capture,
         purchaseUnits: [
           {
             amount: {
@@ -512,7 +512,7 @@ app.post("/api/paypal/order/create", async (req, res) => {
         applicationContext: {
           returnUrl: "",
           shippingPreference: "NO_SHIPPING"  as any,
-          userAction: "PAY_NOW",
+          userAction: OrderApplicationContextUserAction.PayNow,
         },
     };
 
