@@ -2,14 +2,16 @@ import express from "express";
 import cors from "cors";
 import { createClient } from "@supabase/supabase-js";
 import cookieParser from "cookie-parser";
-import { authenticateUser } from "./authenticationMiddleware.ts";
+import { authenticateUser } from "./authenticationMiddleware.js";
 import {
   Client,
   Environment,
   OrdersController,
   ApiError,
-  CheckoutPaymentIntent,
+  OrderApplicationContextUserAction,
+  CheckoutPaymentIntent
 } from "@paypal/paypal-server-sdk";
+import type { OrderRequest } from "@paypal/paypal-server-sdk";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -498,8 +500,7 @@ app.post("/api/paypal/order/create", async (req, res) => {
     }
 
     // Construct the order request for a donation
-    const collect = {
-      body: {
+    const body: OrderRequest = {
         intent: CheckoutPaymentIntent.Capture,
         purchaseUnits: [
           {
@@ -511,13 +512,12 @@ app.post("/api/paypal/order/create", async (req, res) => {
         ],
         applicationContext: {
           returnUrl: "",
-          shippingPreference: "NO_SHIPPING",
-          userAction: "PAY_NOW",
+          shippingPreference: "NO_SHIPPING"  as any,
+          userAction: OrderApplicationContextUserAction.PayNow,
         },
-      },
     };
 
-    console.log("Creating PayPal order with:", collect);
+    console.log("Creating PayPal order with:", body);
 
     const ordersController = new OrdersController(client);
     console.log(
@@ -527,7 +527,9 @@ app.post("/api/paypal/order/create", async (req, res) => {
     console.log("ordersController own keys:", Object.keys(ordersController));
 
     // Create the order using OrdersController
-    const { result } = await ordersController.createOrder(collect);
+    const { result } = await ordersController.createOrder({
+      body,
+    });
     console.log("PayPal order created:", result);
     // Extract the approval URL
     const approvalUrl = result.links.find(
