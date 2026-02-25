@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,15 +23,30 @@ import AuthButton from "@/components/auth-button";
 import Link from "next/link";
 import MovieModal from "@/components/MovieModal";
 
+type Movie = {
+  id: number;
+  title: string;
+  img_url: string;
+  genres: string[];
+  languages: string[];
+  subtitles?: string[];
+  formats?: string[];
+};
+
+type Option = {
+  id: number;
+  name: string;
+};
+
 export default function FavoritemoviesPage() {
-  const [selectedMovie, setSelectedMovie] = useState(null);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
   const router = useRouter();
-  const [movies, setMovies] = useState([]);
-  const [genres, setGenres] = useState([]);
-  const [languages, setLanguages] = useState([]);
-  const [subtitles, setSubtitles] = useState([]);
-  const [formats, setformats] = useState([]);
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [genres, setGenres] = useState<Option[]>([]);
+  const [languages, setLanguages] = useState<Option[]>([]);
+  const [subtitles, setSubtitles] = useState<Option[]>([]);
+  const [formats, setformats] = useState<Option[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     format: "all",
@@ -48,7 +62,7 @@ export default function FavoritemoviesPage() {
           `${process.env.NEXT_PUBLIC_BACKEND_URL}api/movies`,
           {
             credentials: "include",
-          }
+          },
         );
 
         if (!response.ok) {
@@ -76,7 +90,7 @@ export default function FavoritemoviesPage() {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}api/movies/genres`,
         {
           credentials: "include",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -99,7 +113,7 @@ export default function FavoritemoviesPage() {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}api/movies/formats`,
         {
           credentials: "include",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -122,7 +136,7 @@ export default function FavoritemoviesPage() {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}api/movies/languages`,
         {
           credentials: "include",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -145,7 +159,7 @@ export default function FavoritemoviesPage() {
         `${process.env.NEXT_PUBLIC_BACKEND_URL}api/movies/subtitles`,
         {
           credentials: "include",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -169,7 +183,7 @@ export default function FavoritemoviesPage() {
     fetchformats();
   }, [router]);
 
-  function getColorForGenre(genre) {
+  function getColorForGenre(genre: string) {
     const index =
       genre.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) %
       genreColors.length;

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,13 +22,12 @@ const generateAvatarUrls = (seed: string) => {
   return styles.map(
     (style) =>
       `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(
-        seed
-      )}`
+        seed,
+      )}`,
   );
 };
 
 export default function ProfilePage() {
-  const supabase = createClient();
   const router = useRouter();
 
   const [user, setUser] = useState<any>(null);
@@ -48,7 +46,7 @@ export default function ProfilePage() {
         {
           method: "GET",
           credentials: "include",
-        }
+        },
       );
 
       if (response.status === 401) {
@@ -93,7 +91,7 @@ export default function ProfilePage() {
             avatar_url: avatarUrl,
             bio,
           }),
-        }
+        },
       );
 
       if (response.ok) {
@@ -118,7 +116,7 @@ export default function ProfilePage() {
         {
           method: "POST",
           credentials: "include", // Include cookies for authentication
-        }
+        },
       );
 
       if (response.ok) {
@@ -201,7 +199,7 @@ export default function ProfilePage() {
                     "rounded-full transition-all overflow-hidden w-15 h-15",
                     avatarUrl === url
                       ? "border-primary ring-2 ring-primary"
-                      : "border-muted"
+                      : "border-muted",
                   )}
                 >
                   <img src={url} alt="avatar" />

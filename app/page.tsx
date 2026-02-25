@@ -27,7 +27,6 @@ import type { Event, Category, EventFilters } from "@/lib/types";
 import AuthButton from "@/components/auth-button";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
-// import { createClient } from "@/lib/supabase/client";
 import MainMenu from "@/components/main-menu";
 
 // Dynamically import the map component to avoid SSR issues

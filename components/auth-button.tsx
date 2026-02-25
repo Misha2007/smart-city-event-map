@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Settings, Heart, Shield } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -25,7 +24,6 @@ export default function AuthButton() {
   } | null>(null);
 
   const router = useRouter();
-  const supabase = createClient();
 
   useEffect(() => {
     const getUser = async () => {
@@ -34,7 +32,7 @@ export default function AuthButton() {
         {
           method: "GET",
           credentials: "include",
-        }
+        },
       );
       const data = await response.json();
 
@@ -58,7 +56,7 @@ export default function AuthButton() {
       {
         method: "POST",
         credentials: "include",
-      }
+      },
     );
 
     if (response.ok) {
