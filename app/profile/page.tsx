@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,13 +22,12 @@ const generateAvatarUrls = (seed: string) => {
   return styles.map(
     (style) =>
       `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(
-        seed
-      )}`
+        seed,
+      )}`,
   );
 };
 
 export default function ProfilePage() {
-  const supabase = createClient();
   const router = useRouter();
 
   const [user, setUser] = useState<any>(null);
@@ -43,34 +41,31 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/profile`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
 
-      if (error || !user) {
+      if (response.status === 401) {
         router.push("/");
         return;
       }
 
-      setUser(user);
+      if (response.ok) {
+        const { user, profile } = await response.json();
 
-      const seed = user.email || user.id;
-      const avatars = generateAvatarUrls(seed);
-      setAvatarOptions(avatars);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name, avatar_url, bio")
-        .eq("id", user.id)
-        .single();
-
-      if (profile) {
+        setUser(user);
+        const seed = user.email || user.id;
+        const avatars = generateAvatarUrls(seed);
+        setAvatarOptions(avatars);
         setDisplayName(profile.display_name || "");
-        setAvatarUrl(profile.avatar_url || avatars[0]); // fallback
+        setAvatarUrl(profile.avatar_url || avatars[0]);
         setBio(profile.bio || "");
       } else {
-        setAvatarUrl(avatars[0]); // fallback if no profile
+        router.push("/");
       }
 
       setLoading(false);
@@ -81,18 +76,57 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     setSaving(true);
-    await supabase.from("profiles").upsert({
-      id: user.id,
-      display_name: displayName,
-      avatar_url: avatarUrl,
-      bio,
-    });
-    setSaving(false);
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/profile`,
+        {
+          method: "POST",
+          credentials: "include", // Include the session cookie for authentication
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            display_name: displayName,
+            avatar_url: avatarUrl,
+            bio,
+          }),
+        },
+      );
+
+      if (response.ok) {
+        setSaving(false);
+        // Handle success, show a message, etc.
+      } else {
+        // Handle error
+        setSaving(false);
+        console.log("Error updating profile");
+      }
+    } catch (error) {
+      setSaving(false);
+      console.log("Error:", error);
+    }
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
+    try {
+      // Make POST request to backend to log out
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/logout`,
+        {
+          method: "POST",
+          credentials: "include", // Include cookies for authentication
+        },
+      );
+
+      if (response.ok) {
+        router.push("/");
+      } else {
+        console.error("Error during logout");
+      }
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
   };
 
   if (loading) {
@@ -165,7 +199,7 @@ export default function ProfilePage() {
                     "rounded-full transition-all overflow-hidden w-15 h-15",
                     avatarUrl === url
                       ? "border-primary ring-2 ring-primary"
-                      : "border-muted"
+                      : "border-muted",
                   )}
                 >
                   <img src={url} alt="avatar" />

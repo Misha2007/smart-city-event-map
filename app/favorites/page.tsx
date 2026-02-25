@@ -16,30 +16,34 @@ export default function FavoriteEventsPage() {
 
   useEffect(() => {
     const fetchFavorites = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}api/favorites`,
+          {
+            credentials: "include",
+          }
+        );
 
-      if (!user) {
-        router.push("/");
-        return;
+        if (response.status === 401) {
+          router.push("/");
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch favorites");
+        }
+
+        const { favorites } = await response.json();
+        setFavorites(favorites);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
-
-      const { data, error } = await supabase
-        .from("user_favorites")
-        .select("event_id, events(*)")
-        .eq("user_id", user.id);
-
-      if (data && !error) {
-        const events = data.flatMap((fav) => fav.events);
-        setFavorites(events);
-      }
-
-      setLoading(false);
     };
 
     fetchFavorites();
-  }, []);
+  }, [router]);
 
   const formatEventDate = (dateString: string) => {
     const date = new Date(dateString);

@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Settings, Heart, Shield } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -25,66 +24,47 @@ export default function AuthButton() {
   } | null>(null);
 
   const router = useRouter();
-  const supabase = createClient();
 
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/session`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+      const data = await response.json();
 
-      if (!user) {
+      if (data.user) {
+        setUser(data.user);
+        setUserRole(data.role);
+        setProfile(data.profile);
+      } else {
         setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      setUser(user);
-
-      // Load user role
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .single();
-
-      if (roleData) {
-        setUserRole(roleData.role);
-      }
-
-      // Load profile data
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("display_name, avatar_url")
-        .eq("id", user.id)
-        .single();
-
-      if (profileData) {
-        setProfile(profileData);
       }
 
       setLoading(false);
     };
 
     getUser();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) {
-        setUserRole("user");
-        setProfile(null);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, []);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}api/logout`,
+      {
+        method: "POST",
+        credentials: "include",
+      },
+    );
+
+    if (response.ok) {
+      router.push("/");
+      setUser(null);
+    } else {
+      console.error("Error during logout");
+    }
   };
 
   if (loading) {

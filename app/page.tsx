@@ -27,7 +27,6 @@ import type { Event, Category, EventFilters } from "@/lib/types";
 import AuthButton from "@/components/auth-button";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
-import { createClient } from "@/lib/supabase/client";
 import MainMenu from "@/components/main-menu";
 
 // Dynamically import the map component to avoid SSR issues
@@ -40,15 +39,6 @@ const MapComponent = dynamic(() => import("@/components/map-component"), {
   ),
 });
 
-const categories = [
-  "all",
-  "Festival",
-  "Culture",
-  "Nature",
-  "Education",
-  "Sports",
-  "Technology",
-];
 const dateRanges = [
   { value: "all", label: "All Time" },
   { value: "today", label: "Today" },
@@ -65,7 +55,7 @@ function SmartCityEventsMapContent() {
     search: "",
     dateRange: "all",
   });
-  const supabase = createClient();
+  // const supabase = createClient();
   ``;
 
   // Static events array
@@ -93,7 +83,7 @@ function SmartCityEventsMapContent() {
         const startOfDay = new Date(
           now.getFullYear(),
           now.getMonth(),
-          now.getDate()
+          now.getDate(),
         );
         matchesDate = eventDate >= startOfDay;
         break;
@@ -124,8 +114,12 @@ function SmartCityEventsMapContent() {
       if (filters.dateRange !== "all")
         params.append("dateRange", filters.dateRange);
 
-      const response = await fetch(`/api/events?${params.toString()}`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/events/?${params.toString()}`,
+      );
       if (!response.ok) {
+        console.log(response);
+
         throw new Error("Failed to fetch events");
       }
 
@@ -140,82 +134,84 @@ function SmartCityEventsMapContent() {
     }
   };
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [unAuthUser, setUnAuthUser] = useState(false);
+
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   useEffect(() => {
     const fetchFavorites = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) return;
-
-      const { data } = await supabase
-        .from("user_favorites")
-        .select("event_id")
-        .eq("user_id", user.id);
-
-      if (data) {
-        setFavoriteIds(data.map((fav) => fav.event_id));
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}api/favorites`,
+          {
+            credentials: "include",
+          },
+        );
+        if (response.ok) {
+          const { favorites } = await response.json();
+          const ids = favorites.map((event: any) => event.id);
+          setFavoriteIds(ids);
+        }
+        if (response.status === 401) {
+          setUnAuthUser(true);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchFavorites();
   }, []);
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
   const toggleFavorite = async (eventId: string) => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/favorites/toggle`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventId }),
+          credentials: "include",
+        },
+      );
 
-    if (!user) return;
+      if (!res.ok) throw new Error("Failed to toggle favorite");
 
-    const isFav = favoriteIds.includes(eventId);
-
-    if (isFav) {
-      await supabase
-        .from("user_favorites")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("event_id", eventId);
-
-      setFavoriteIds((prev) => prev.filter((id) => id !== eventId));
-    } else {
-      const response = await supabase.from("user_favorites").insert({
-        user_id: user.id,
-        event_id: eventId,
-      });
-
-      console.log("Favorite added:", response, eventId);
-
-      setFavoriteIds((prev) => [...prev, eventId]);
+      // Update local state optimistically
+      setFavoriteIds((prev) =>
+        prev.includes(eventId)
+          ? prev.filter((id) => id !== eventId)
+          : [...prev, eventId],
+      );
+    } catch (error) {
+      console.error(error);
     }
-  };
-
-  const fetchCategories = async (): Promise<Category[]> => {
-    const { data, error } = await supabase
-      .from("categories")
-      .select("id, name, slug, icon, color")
-      .order("name", { ascending: true });
-
-    if (error) {
-      console.error("Error fetching categories:", error);
-      return [];
-    }
-
-    return data ?? [];
   };
 
   useEffect(() => {
-    const getCategories = async () => {
-      const cats = await fetchCategories();
-      setCategories(cats);
+    const fetchCategories = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}api/categories`,
+        );
+        if (!response.ok) throw new Error("Failed to fetch categories");
+        console.log(response);
+        const categories = await response.json();
+        setCategories(categories);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    getCategories();
+    fetchCategories();
   }, []);
 
   if (loading) {
@@ -393,20 +389,22 @@ function SmartCityEventsMapContent() {
                     <h4 className="font-medium text-sm text-foreground">
                       {event.title}
                     </h4>
-                    <Button
-                      variant="like"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(event.id);
-                      }}
-                    >
-                      {favoriteIds.includes(event.id) ? (
-                        <Heart className="w-4 h-4 text-red-500 fill-red-500" />
-                      ) : (
-                        <HeartOff className="w-4 h-4 text-muted-foreground" />
-                      )}
-                    </Button>
+                    {!unAuthUser && (
+                      <Button
+                        variant="like"
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFavorite(event.id);
+                        }}
+                      >
+                        {favoriteIds.includes(event.id) ? (
+                          <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+                        ) : (
+                          <HeartOff className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    )}
                   </div>
 
                   {event.description && (

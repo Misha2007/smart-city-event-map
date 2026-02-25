@@ -48,8 +48,8 @@ import {
   MapPin,
   Loader2,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import type { Category, Event } from "@/lib/types";
+import { useRouter } from "next/navigation";
 
 interface EventFormData {
   title: string;
@@ -88,6 +88,7 @@ function formatTime(time: string) {
 }
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +96,6 @@ export default function AdminDashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categoriesList, setCategoriesList] = useState<Category[]>([]);
-  const supabase = createClient();
 
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
@@ -112,47 +112,47 @@ export default function AdminDashboard() {
     website_url: "",
     contact_info: "",
   });
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/admin/status`, {
+      credentials: "include",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Client-side session data:", data.hasAccess);
+        setIsAdmin(data.hasAccess);
+      })
+      .catch((err) => {
+        setIsAdmin(false);
+        console.error("Client-side fetch error:", err);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (isAdmin === false) {
+      router.push("/");
+    }
+  }, [isAdmin]);
 
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("events")
-        .select(
-          `
-        id,
-        title,
-        description,
-        event_date_start,
-        event_date_end,
-        event_time_start,
-        event_time_end,
-        location_name,
-        latitude,
-        longitude,
-        image_url,
-        website_url,
-        contact_info,
-        created_at,
-        updated_at,
-        category:categories (
-          id,
-          name,
-          slug,
-          color
-        )
-      `
-        )
-        .order("created_at", { ascending: false });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/events`,
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch events");
+      }
 
-      if (error) throw error;
+      const data = await response.json();
 
       // Normalize the returned data to match your Event type
       const normalized = (data || []).map((e: any) => ({
         ...e,
         category: Array.isArray(e.category)
           ? e.category[0] || null
-          : e.category ?? null,
+          : (e.category ?? null),
       }));
 
       setEvents(normalized);
@@ -164,10 +164,8 @@ export default function AdminDashboard() {
   };
 
   const fetchCategories = async () => {
-    const { data, error } = await supabase
-      .from("categories")
-      .select("id, name, slug, color")
-      .order("name", { ascending: true });
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}`);
+    const data = await response.json();
 
     if (!error && data) {
       setCategoriesList(data);
@@ -175,9 +173,11 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchEvents();
-    fetchCategories();
-  }, []);
+    if (isAdmin) {
+      fetchEvents();
+      fetchCategories();
+    }
+  }, [isAdmin]);
 
   const resetForm = () => {
     setFormData({
@@ -240,15 +240,46 @@ export default function AdminDashboard() {
       };
 
       if (editingEvent) {
-        const { error } = await supabase
-          .from("events")
-          .update(eventData)
-          .eq("id", editingEvent.id);
-
-        if (error) throw error;
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}api/events`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({
+                eventData,
+                id: editingEvent.id,
+              }),
+            },
+          );
+          const result = await response.json();
+          console.log(result);
+        } catch (error) {
+          if (error instanceof Error) {
+            console.error(error.message);
+          } else {
+            console.error("Unknown error:", error);
+          }
+        }
       } else {
-        const { error } = await supabase.from("events").insert([eventData]);
-        if (error) throw error;
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}api/events`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(eventData),
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to create event");
+        }
       }
 
       await fetchEvents();
@@ -265,11 +296,18 @@ export default function AdminDashboard() {
     if (!confirm("Are you sure you want to delete this event?")) return;
 
     try {
-      const { error } = await supabase
-        .from("events")
-        .delete()
-        .eq("id", eventId);
-      if (error) throw error;
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/events/${eventId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete event");
+      }
+
       await fetchEvents();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete event");
@@ -599,7 +637,7 @@ export default function AdminDashboard() {
                               <>
                                 {" - " +
                                   new Date(
-                                    ev.event_date_end
+                                    ev.event_date_end,
                                   ).toLocaleDateString()}
                               </>
                             )}
@@ -669,7 +707,7 @@ export default function AdminDashboard() {
                 <div className="text-2xl font-bold">
                   {
                     new Set(
-                      events.map((e) => e.category?.name ?? "Uncategorized")
+                      events.map((e) => e.category?.name ?? "Uncategorized"),
                     ).size
                   }
                 </div>
