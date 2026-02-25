@@ -112,23 +112,25 @@ export default function AdminDashboard() {
     website_url: "",
     contact_info: "",
   });
-  const [isAdmin, setIsAdmin] = useState(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/admin/status", { credentials: "include" })
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}api/admin/status`, {
+      credentials: "include",
+    })
       .then((res) => res.json())
       .then((data) => {
         console.log("Client-side session data:", data.hasAccess);
         setIsAdmin(data.hasAccess);
       })
       .catch((err) => {
-        setIsAdmin(null);
+        setIsAdmin(false);
         console.error("Client-side fetch error:", err);
       });
   }, []);
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (isAdmin === false) {
       router.push("/");
     }
   }, [isAdmin]);
@@ -136,7 +138,9 @@ export default function AdminDashboard() {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/events`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/events`,
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch events");
       }
@@ -160,7 +164,7 @@ export default function AdminDashboard() {
   };
 
   const fetchCategories = async () => {
-    const response = await fetch(`http://localhost:5000/api/categories`);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}`);
     const data = await response.json();
 
     if (!error && data) {
@@ -237,17 +241,20 @@ export default function AdminDashboard() {
 
       if (editingEvent) {
         try {
-          const response = await fetch("http://localhost:5000/api/events", {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}api/events`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({
+                eventData,
+                id: editingEvent.id,
+              }),
             },
-            credentials: "include",
-            body: JSON.stringify({
-              eventData,
-              id: editingEvent.id,
-            }),
-          });
+          );
           const result = await response.json();
           console.log(result);
         } catch (error) {
@@ -258,14 +265,17 @@ export default function AdminDashboard() {
           }
         }
       } else {
-        const response = await fetch("http://localhost:5000/api/events", {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}api/events`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(eventData),
           },
-          body: JSON.stringify(eventData),
-        });
+        );
 
         if (!response.ok) {
           throw new Error("Failed to create event");
@@ -287,7 +297,7 @@ export default function AdminDashboard() {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/events/${eventId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}api/events/${eventId}`,
         {
           method: "DELETE",
           credentials: "include",
