@@ -25,12 +25,12 @@ jobs:
 
       - name: Run getEvents
         env:
-          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python getEvents.py
 
       - name: Run getFilms
         env:
-          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python getFilms.py
