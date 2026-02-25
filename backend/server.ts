@@ -9,7 +9,7 @@ import {
   OrdersController,
   ApiError,
   OrderApplicationContextUserAction,
-  CheckoutPaymentIntent
+  CheckoutPaymentIntent,
 } from "@paypal/paypal-server-sdk";
 import type { OrderRequest } from "@paypal/paypal-server-sdk";
 
@@ -17,7 +17,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 4000;
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -29,14 +29,14 @@ app.use(
   cors({
     origin: FRONTEND_URL,
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json());
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   throw new Error(
-    "SUPABASE_URL or SUPABASE_KEY is not defined in the .env file"
+    "SUPABASE_URL or SUPABASE_KEY is not defined in the .env file",
   );
 }
 
@@ -97,7 +97,7 @@ app.get("/api/events", async (req, res) => {
       icon,
       color
     )
-  `
+  `,
       )
       .or(`event_date_end.gte.${today},event_date_start.gte.${today}`)
       .order("event_date_start", { ascending: true });
@@ -501,20 +501,20 @@ app.post("/api/paypal/order/create", async (req, res) => {
 
     // Construct the order request for a donation
     const body: OrderRequest = {
-        intent: CheckoutPaymentIntent.Capture,
-        purchaseUnits: [
-          {
-            amount: {
-              currencyCode: "USD",
-              value: amount.toString(),
-            },
+      intent: CheckoutPaymentIntent.Capture,
+      purchaseUnits: [
+        {
+          amount: {
+            currencyCode: "USD",
+            value: amount.toString(),
           },
-        ],
-        applicationContext: {
-          returnUrl: "",
-          shippingPreference: "NO_SHIPPING"  as any,
-          userAction: OrderApplicationContextUserAction.PayNow,
         },
+      ],
+      applicationContext: {
+        returnUrl: "",
+        shippingPreference: "NO_SHIPPING" as any,
+        userAction: OrderApplicationContextUserAction.PayNow,
+      },
     };
 
     console.log("Creating PayPal order with:", body);
@@ -522,7 +522,7 @@ app.post("/api/paypal/order/create", async (req, res) => {
     const ordersController = new OrdersController(client);
     console.log(
       "ordersController prototype methods:",
-      Object.getOwnPropertyNames(Object.getPrototypeOf(ordersController))
+      Object.getOwnPropertyNames(Object.getPrototypeOf(ordersController)),
     );
     console.log("ordersController own keys:", Object.keys(ordersController));
 
@@ -533,7 +533,7 @@ app.post("/api/paypal/order/create", async (req, res) => {
     console.log("PayPal order created:", result);
     // Extract the approval URL
     const approvalUrl = result.links.find(
-      (link: any) => link.rel === "approve"
+      (link: any) => link.rel === "approve",
     )?.href;
 
     if (!approvalUrl) {
