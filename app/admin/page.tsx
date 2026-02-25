@@ -122,13 +122,13 @@ export default function AdminDashboard() {
         setIsAdmin(data.hasAccess);
       })
       .catch((err) => {
-        setIsAdmin(false);
+        setIsAdmin(null);
         console.error("Client-side fetch error:", err);
       });
   }, []);
 
   useEffect(() => {
-    if (isAdmin === false) {
+    if (!isAdmin) {
       router.push("/");
     }
   }, [isAdmin]);
@@ -148,7 +148,7 @@ export default function AdminDashboard() {
         ...e,
         category: Array.isArray(e.category)
           ? e.category[0] || null
-          : e.category ?? null,
+          : (e.category ?? null),
       }));
 
       setEvents(normalized);
@@ -251,7 +251,7 @@ export default function AdminDashboard() {
           const result = await response.json();
           console.log(result);
         } catch (error) {
-          console.error(error.message);
+          console.error(error?.message);
         }
       } else {
         const response = await fetch("http://localhost:5000/api/events", {
@@ -287,7 +287,7 @@ export default function AdminDashboard() {
         {
           method: "DELETE",
           credentials: "include",
-        }
+        },
       );
 
       if (!response.ok) {
@@ -623,7 +623,7 @@ export default function AdminDashboard() {
                               <>
                                 {" - " +
                                   new Date(
-                                    ev.event_date_end
+                                    ev.event_date_end,
                                   ).toLocaleDateString()}
                               </>
                             )}
@@ -693,7 +693,7 @@ export default function AdminDashboard() {
                 <div className="text-2xl font-bold">
                   {
                     new Set(
-                      events.map((e) => e.category?.name ?? "Uncategorized")
+                      events.map((e) => e.category?.name ?? "Uncategorized"),
                     ).size
                   }
                 </div>
