@@ -1,0 +1,1 @@
+{"version":3,"file":"authenticationMiddleware.d.ts","sourceRoot":"","sources":["../authenticationMiddleware.ts"],"names":[],"mappings":"AACA,OAAO,OAAO,MAAM,SAAS,CAAC;AAS9B,eAAO,MAAM,gBAAgB,GAC3B,KAAK,OAAO,CAAC,OAAO,EACpB,KAAK,OAAO,CAAC,QAAQ,EACrB,MAAM,OAAO,CAAC,YAAY,wDA6B3B,CAAC"}

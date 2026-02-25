@@ -251,7 +251,11 @@ export default function AdminDashboard() {
           const result = await response.json();
           console.log(result);
         } catch (error) {
-          console.error(error?.message);
+          if (error instanceof Error) {
+            console.error(error.message);
+          } else {
+            console.error("Unknown error:", error);
+          }
         }
       } else {
         const response = await fetch("http://localhost:5000/api/events", {

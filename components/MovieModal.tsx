@@ -1,6 +1,12 @@
 import { X } from "lucide-react";
 
-export default function MovieModal({ movie, onClose }) {
+export default function MovieModal({
+  movie,
+  onClose,
+}: {
+  movie: any;
+  onClose: any;
+}) {
   if (!movie) return null;
 
   return (

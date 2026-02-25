@@ -17,7 +17,7 @@ export default function PaypalCardForm() {
   // const [error, setError] = useState();
 
   const initialOptions = {
-    "client-id":
+    clientId:
       "AYOeyCQvilLVKJGjslZfFSi_Nkl7A6OfXNarj5lS55iUcQXMhpp3AypVjAVkS_qvPcO5D415b9SnBFuN",
     "enable-funding": "venmo",
     "disable-funding": "",
@@ -53,7 +53,7 @@ export default function PaypalCardForm() {
   }
 
   // Handle order approval
-  async function onApprove(data, actions) {
+  async function onApprove(data: any) {
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}api/paypal/order/capture`,
@@ -83,15 +83,14 @@ export default function PaypalCardForm() {
         throw new Error(errorMessage);
       } else {
         window.location.href = `/sponsorship/thankYou?transactionId=${transaction.id}&amount=${transaction.amount.value}`;
-        return `Transaction ${transaction.status}: ${transaction.id}. See console for all available details`;
       }
     } catch (error) {
-      return `Sorry, your transaction could not be processed...${error}`;
+      console.error("Error capturing order:", error);
     }
   }
 
   // Handle error from SDK
-  function onError(error) {
+  function onError(error: any) {
     // setError(error);
     console.error("Error with PayPal SDK:", error);
   }
@@ -174,17 +173,14 @@ export default function PaypalCardForm() {
               color: "gold",
               label: "paypal",
               height: 50,
-              width: "100%",
             }}
           />
           <PayPalCardFieldsProvider
             createOrder={createOrder}
+            onError={onError}
             onApprove={onApprove}
             style={{
               input: {
-                fontSize: "16px",
-                fontFamily: "Arial, sans-serif",
-                fontWeight: "normal",
                 color: "#333",
                 padding: "12px",
                 borderRadius: "8px",
@@ -213,7 +209,13 @@ export default function PaypalCardForm() {
   );
 }
 
-const SubmitPayment = ({ isPaying, setIsPaying }) => {
+const SubmitPayment = ({
+  isPaying,
+  setIsPaying,
+}: {
+  isPaying: boolean;
+  setIsPaying: any;
+}) => {
   const { cardFieldsForm, fields } = usePayPalCardFields();
 
   const handleClick = async () => {
@@ -229,7 +231,7 @@ const SubmitPayment = ({ isPaying, setIsPaying }) => {
     }
     setIsPaying(true);
 
-    cardFieldsForm.submit({}).catch((err) => {
+    cardFieldsForm.submit().catch((err) => {
       setIsPaying(false);
     });
   };
