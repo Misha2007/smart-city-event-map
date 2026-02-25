@@ -23,6 +23,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Check env
+        run: |
+          echo "SUPABASE_URL exists: ${SUPABASE_URL:-not set}"
+
       - name: Run getEvents
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
