@@ -24,8 +24,10 @@ jobs:
           pip install -r requirements.txt
 
       - name: Check env
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         run: |
-          echo "SUPABASE_URL exists: ${SUPABASE_URL:-not set}"
+          echo "NEXT_PUBLIC_SUPABASE_URL exists: ${NEXT_PUBLIC_SUPABASE_URL:-not set}"
 
       - name: Run getEvents
         env:
