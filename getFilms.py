@@ -22,7 +22,7 @@ options.add_argument("--headless=new")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 
-driver = webdriver.Chrome()
+driver = webdriver.Chrome(options=options)
 
 driver.get(url)
 driver.find_element("xpath", '//*[@id="article-ajax-content-3062"]/div[1]/form/div/div[1]/div[2]/fieldset/div/div[2]').click()
